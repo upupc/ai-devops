@@ -1,0 +1,50 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 12px;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.actions {
+    display: flex;
+    gap: 4px;
+}
+
+.treeContainer {
+    flex: 1;
+    overflow: auto;
+}
+
+.emptyContainer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    padding: 20px;
+}
+
+.emptyTree {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 200px;
+}
+
+.treeNodeTitle {
+    display: inline-block;
+    padding: 2px 4px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.treeNodeTitle:hover {
+    background-color: #f5f5f5;
+    border-radius: 2px;
+}

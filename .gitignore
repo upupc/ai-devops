@@ -1,0 +1,42 @@
+# 依赖目录
+node_modules/
+
+# 构建输出
+dist/
+.next/
+out/
+
+# 环境变量
+.env
+.env.local
+.env.*.local
+
+# 生成的代码目录
+generated/
+
+# IDE 配置
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 日志文件
+*.log
+npm-debug.log*
+
+# 测试覆盖率
+coverage/
+
+# Claude Code
+.claude
+
+# 工作区目录 (运行时生成)
+workspaces/
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts

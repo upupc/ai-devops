@@ -1,0 +1,118 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 12px;
+}
+
+.sessionHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.sessionList {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.sessionItem {
+    cursor: pointer;
+    padding: 8px 12px !important;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.sessionItem:hover {
+    background-color: #f5f5f5;
+}
+
+.sessionItem.active {
+    background-color: #e6f7ff;
+}
+
+.messagesContainer {
+    flex: 1;
+    overflow-y: auto;
+    margin-bottom: 12px;
+}
+
+.emptyChat {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+}
+
+.messagesList {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.messageItem {
+    display: flex;
+    gap: 8px;
+    max-width: 100%;
+}
+
+.userMessage {
+    flex-direction: row-reverse;
+}
+
+.assistantMessage {
+    flex-direction: row;
+}
+
+.messageBubble {
+    max-width: 85%;
+    padding: 8px 12px;
+    border-radius: 8px;
+    word-break: break-word;
+}
+
+.userMessage .messageBubble {
+    background-color: #1890ff;
+    color: #fff;
+}
+
+.assistantMessage .messageBubble {
+    background-color: #f0f0f0;
+    color: #333;
+}
+
+.messageContent {
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.toolCalls {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.toolCall {
+    margin-bottom: 4px;
+}
+
+.toolOutput {
+    font-size: 12px;
+    background: rgba(0, 0, 0, 0.05);
+    padding: 4px 8px;
+    border-radius: 4px;
+    margin-top: 4px;
+    overflow-x: auto;
+}
+
+.loadingIndicator {
+    display: flex;
+    align-items: center;
+    padding: 8px;
+}
+
+.inputContainer {
+    padding-top: 8px;
+    border-top: 1px solid #f0f0f0;
+}
