@@ -40,7 +40,7 @@ export async function DELETE(request: NextRequest, { params }: Params) {
         // 先清理 ChatSession
         deleteChatSession(id);
         // 再删除存储数据
-        await deleteSession(id);
+        deleteSession(id);
         return NextResponse.json({ success: true });
     } catch (error) {
         console.error("删除会话失败:", error);

@@ -7,11 +7,16 @@ import { Session, Message, Workspace, FileNode, OpenFile } from '@/types'
  * 应用状态接口
  */
 interface AppState {
+    // 工作区相关
+    workspaces: Workspace[]
+    currentWorkspaceId: string | null
+    currentWorkspace: Workspace | null
+    // 会话相关
     sessions: Session[]
     currentSessionId: string | null
     messages: Message[]
     isLoading: boolean
-    workspace: Workspace | null
+    // 文件相关
     fileTree: FileNode | null
     openFiles: OpenFile[]
     activeFilePath: string | null
@@ -21,6 +26,10 @@ interface AppState {
  * 状态操作类型
  */
 type AppAction =
+    | { type: 'SET_WORKSPACES'; payload: Workspace[] }
+    | { type: 'ADD_WORKSPACE'; payload: Workspace }
+    | { type: 'DELETE_WORKSPACE'; payload: string }
+    | { type: 'SET_CURRENT_WORKSPACE'; payload: Workspace | null }
     | { type: 'SET_SESSIONS'; payload: Session[] }
     | { type: 'ADD_SESSION'; payload: Session }
     | { type: 'DELETE_SESSION'; payload: string }
@@ -29,23 +38,25 @@ type AppAction =
     | { type: 'ADD_MESSAGE'; payload: Message }
     | { type: 'UPDATE_MESSAGE'; payload: { id: string; content: string } }
     | { type: 'SET_LOADING'; payload: boolean }
-    | { type: 'SET_WORKSPACE'; payload: Workspace | null }
     | { type: 'SET_FILE_TREE'; payload: FileNode | null }
     | { type: 'OPEN_FILE'; payload: OpenFile }
     | { type: 'CLOSE_FILE'; payload: string }
     | { type: 'SET_ACTIVE_FILE'; payload: string | null }
     | { type: 'UPDATE_FILE_CONTENT'; payload: { path: string; content: string } }
     | { type: 'MARK_FILE_SAVED'; payload: string }
+    | { type: 'RESET_SESSION_STATE' }
 
 /**
  * 初始状态
  */
 const initialState: AppState = {
+    workspaces: [],
+    currentWorkspaceId: null,
+    currentWorkspace: null,
     sessions: [],
     currentSessionId: null,
     messages: [],
     isLoading: false,
-    workspace: null,
     fileTree: null,
     openFiles: [],
     activeFilePath: null,
@@ -56,6 +67,29 @@ const initialState: AppState = {
  */
 function appReducer(state: AppState, action: AppAction): AppState {
     switch (action.type) {
+        // 工作区操作
+        case 'SET_WORKSPACES':
+            return { ...state, workspaces: action.payload }
+
+        case 'ADD_WORKSPACE':
+            return { ...state, workspaces: [...state.workspaces, action.payload] }
+
+        case 'DELETE_WORKSPACE':
+            return {
+                ...state,
+                workspaces: state.workspaces.filter(w => w.id !== action.payload),
+                currentWorkspaceId: state.currentWorkspaceId === action.payload ? null : state.currentWorkspaceId,
+                currentWorkspace: state.currentWorkspace?.id === action.payload ? null : state.currentWorkspace,
+            }
+
+        case 'SET_CURRENT_WORKSPACE':
+            return {
+                ...state,
+                currentWorkspace: action.payload,
+                currentWorkspaceId: action.payload?.id || null,
+            }
+
+        // 会话操作
         case 'SET_SESSIONS':
             return { ...state, sessions: action.payload }
 
@@ -88,9 +122,6 @@ function appReducer(state: AppState, action: AppAction): AppState {
 
         case 'SET_LOADING':
             return { ...state, isLoading: action.payload }
-
-        case 'SET_WORKSPACE':
-            return { ...state, workspace: action.payload }
 
         case 'SET_FILE_TREE':
             return { ...state, fileTree: action.payload }
@@ -135,6 +166,17 @@ function appReducer(state: AppState, action: AppAction): AppState {
                 openFiles: state.openFiles.map(f =>
                     f.path === action.payload ? { ...f, modified: false } : f
                 ),
+            }
+
+        case 'RESET_SESSION_STATE':
+            return {
+                ...state,
+                sessions: [],
+                currentSessionId: null,
+                messages: [],
+                fileTree: null,
+                openFiles: [],
+                activeFilePath: null,
             }
 
         default:

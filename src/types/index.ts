@@ -1,5 +1,19 @@
 /**
+ * 工作区接口定义
+ * Workspace 是独立的工作空间，可以包含多个 Session
+ */
+export interface Workspace {
+    id: string
+    name: string
+    /** 工作区独立目录路径，作为 claude agent 的工作根目录 */
+    path: string
+    createdAt: Date
+    updatedAt: Date
+}
+
+/**
  * 会话接口定义
+ * Session 属于某个 Workspace，一个 Workspace 可以有多个 Session
  */
 export interface Session {
     id: string
@@ -40,16 +54,6 @@ export interface Message {
     role: MessageRole
     content: string
     toolCalls?: ToolCall[]
-    createdAt: Date
-}
-
-/**
- * 工作区接口定义
- */
-export interface Workspace {
-    id: string
-    sessionId: string
-    path: string
     createdAt: Date
 }
 

@@ -141,11 +141,14 @@ export class AgentSession {
                 },
                 cwd: options?.cwd,
                 permissionMode: "bypassPermissions",
+                allowDangerouslySkipPermissions:true,
                 tools: {
                     type: "preset",
                     preset: "claude_code",
                 },
-                settingSources: ["user"]
+                settingSources: ["project"],
+                resume: options?.sessionId as any,
+                stderr: data => console.log(data),
             }
         });
 

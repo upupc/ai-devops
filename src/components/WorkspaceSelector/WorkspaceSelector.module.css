@@ -1,0 +1,35 @@
+.container {
+    padding: 24px;
+    height: 100%;
+    overflow: auto;
+    background: #f5f5f5;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.loadingContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+}
+
+.emptyContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: calc(100% - 80px);
+}
+
+.workspaceCard {
+    height: 100%;
+}
+
+.workspaceCard:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}

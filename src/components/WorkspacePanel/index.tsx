@@ -14,7 +14,7 @@ const Editor = dynamic(
         ssr: false,
         loading: () => (
             <div className={styles.editorLoading}>
-                <Spin tip="加载编辑器..." />
+                <Spin size="large" />
             </div>
         )
     }
@@ -59,33 +59,35 @@ function getLanguageFromPath(path: string): string {
  */
 export default function WorkspacePanel() {
     const { state, dispatch } = useAppState()
-    const { workspace, openFiles, activeFilePath } = state
+    const { currentWorkspace, openFiles, activeFilePath } = state
 
     /**
      * 保存文件
      */
-    const handleSaveFile = useCallback(async (path: string) => {
-        const file = openFiles.find(f => f.path === path)
-        if (!file || !workspace) return
+    const handleSaveFile = useCallback(async (filePath: string) => {
+        const file = openFiles.find(f => f.path === filePath)
+        if (!file || !currentWorkspace) return
 
         try {
-            const response = await fetch(`/api/files/${encodeURIComponent(path)}`, {
+            // 对路径的每个段分别编码，保留斜杠
+            const encodedPath = filePath.split('/').map(segment => encodeURIComponent(segment)).join('/')
+            const response = await fetch(`/api/files/${encodedPath}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    workspaceId: workspace.id,
+                    workspaceId: currentWorkspace.id,
                     content: file.content,
                 }),
             })
 
             if (!response.ok) throw new Error('保存文件失败')
 
-            dispatch({ type: 'MARK_FILE_SAVED', payload: path })
+            dispatch({ type: 'MARK_FILE_SAVED', payload: filePath })
             message.success('文件保存成功')
         } catch {
             message.error('保存文件失败')
         }
-    }, [openFiles, workspace, dispatch])
+    }, [openFiles, currentWorkspace, dispatch])
 
     /**
      * 关闭文件
@@ -135,10 +137,10 @@ export default function WorkspacePanel() {
         return () => window.removeEventListener('keydown', handleKeyDown)
     }, [activeFilePath, handleSaveFile])
 
-    if (!workspace) {
+    if (!currentWorkspace) {
         return (
             <div className={styles.emptyContainer}>
-                <Empty description="请选择或创建一个会话以开始使用工作区" />
+                <Empty description="请选择工作区" />
             </div>
         )
     }
@@ -146,7 +148,7 @@ export default function WorkspacePanel() {
     if (openFiles.length === 0) {
         return (
             <div className={styles.emptyContainer}>
-                <Empty description="从右侧文件浏览器中选择文件进行编辑" />
+                <Empty description="从文件浏览器中选择文件进行编辑" />
             </div>
         )
     }

@@ -2,24 +2,21 @@
 
 import React, { useState, useRef, useEffect } from 'react'
 import {
-    List,
     Input,
     Button,
     Typography,
     Space,
-    Dropdown,
     Modal,
     message,
     Spin,
     Avatar,
     Empty,
-    Divider
+    Select
 } from 'antd'
 import {
     SendOutlined,
     PlusOutlined,
     DeleteOutlined,
-    MoreOutlined,
     UserOutlined,
     RobotOutlined,
     LoadingOutlined
@@ -41,7 +38,7 @@ export default function ChatPanel() {
     const [isCreateModalVisible, setIsCreateModalVisible] = useState(false)
     const messagesEndRef = useRef<HTMLDivElement>(null)
 
-    const { sessions, currentSessionId, messages, isLoading } = state
+    const { sessions, currentSessionId, messages, isLoading, currentWorkspace } = state
 
     /**
      * 滚动到最新消息
@@ -55,7 +52,7 @@ export default function ChatPanel() {
     }, [messages])
 
     /**
-     * 创建新会话
+     * 创建新会话（在当前工作区下）
      */
     const handleCreateSession = async () => {
         if (!newSessionName.trim()) {
@@ -63,8 +60,13 @@ export default function ChatPanel() {
             return
         }
 
+        if (!currentWorkspace) {
+            message.warning('请先选择工作区')
+            return
+        }
+
         try {
-            const response = await fetch('/api/sessions', {
+            const response = await fetch(`/api/workspaces/${currentWorkspace.id}/sessions`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name: newSessionName }),
@@ -75,9 +77,7 @@ export default function ChatPanel() {
             const data = await response.json()
             dispatch({ type: 'ADD_SESSION', payload: data.session })
             dispatch({ type: 'SET_CURRENT_SESSION', payload: data.session.id })
-            dispatch({ type: 'SET_WORKSPACE', payload: data.workspace })
             dispatch({ type: 'SET_MESSAGES', payload: [] })
-            dispatch({ type: 'SET_FILE_TREE', payload: null })
 
             setNewSessionName('')
             setIsCreateModalVisible(false)
@@ -103,19 +103,12 @@ export default function ChatPanel() {
                 dispatch({ type: 'SET_MESSAGES', payload: messagesData.messages })
             }
 
-            // 获取工作区信息
-            const workspaceRes = await fetch(`/api/sessions/${sessionId}/workspace`)
-            if (workspaceRes.ok) {
-                const workspaceData = await workspaceRes.json()
-                dispatch({ type: 'SET_WORKSPACE', payload: workspaceData.workspace })
-
-                // 获取文件树
-                if (workspaceData.workspace) {
-                    const filesRes = await fetch(`/api/files?workspaceId=${workspaceData.workspace.id}`)
-                    if (filesRes.ok) {
-                        const filesData = await filesRes.json()
-                        dispatch({ type: 'SET_FILE_TREE', payload: filesData.tree })
-                    }
+            // 刷新文件树（工作区已经选定）
+            if (currentWorkspace) {
+                const filesRes = await fetch(`/api/files?workspaceId=${currentWorkspace.id}`)
+                if (filesRes.ok) {
+                    const filesData = await filesRes.json()
+                    dispatch({ type: 'SET_FILE_TREE', payload: filesData.tree })
                 }
             }
         } catch {
@@ -129,7 +122,7 @@ export default function ChatPanel() {
     const handleDeleteSession = async (sessionId: string) => {
         Modal.confirm({
             title: '确认删除',
-            content: '删除会话将同时删除相关的工作区和所有文件，确定要删除吗？',
+            content: '删除会话将删除所有对话记录，确定要删除吗？',
             onOk: async () => {
                 try {
                     const response = await fetch(`/api/sessions/${sessionId}`, {
@@ -141,8 +134,6 @@ export default function ChatPanel() {
                     dispatch({ type: 'DELETE_SESSION', payload: sessionId })
                     if (currentSessionId === sessionId) {
                         dispatch({ type: 'SET_MESSAGES', payload: [] })
-                        dispatch({ type: 'SET_WORKSPACE', payload: null })
-                        dispatch({ type: 'SET_FILE_TREE', payload: null })
                     }
                     message.success('会话已删除')
                 } catch {
@@ -244,9 +235,9 @@ export default function ChatPanel() {
      * 刷新文件树
      */
     const refreshFileTree = async () => {
-        if (!state.workspace) return
+        if (!currentWorkspace) return
         try {
-            const response = await fetch(`/api/files?workspaceId=${state.workspace.id}`)
+            const response = await fetch(`/api/files?workspaceId=${currentWorkspace.id}`)
             if (response.ok) {
                 const data = await response.json()
                 dispatch({ type: 'SET_FILE_TREE', payload: data.tree })
@@ -293,66 +284,43 @@ export default function ChatPanel() {
 
     return (
         <div className={styles.container}>
-            {/* 会话列表区域 */}
+            {/* 会话选择区域 */}
             <div className={styles.sessionHeader}>
-                <Text strong>会话列表</Text>
+                <Select
+                    value={currentSessionId || undefined}
+                    onChange={handleSelectSession}
+                    placeholder="选择会话"
+                    style={{ flex: 1 }}
+                    options={sessions.map((session: Session) => ({
+                        value: session.id,
+                        label: session.name,
+                    }))}
+                    dropdownRender={(menu) => (
+                        <>
+                            {menu}
+                            <div style={{ padding: '8px', borderTop: '1px solid #f0f0f0' }}>
+                                <Button
+                                    type="link"
+                                    icon={<PlusOutlined />}
+                                    onClick={() => setIsCreateModalVisible(true)}
+                                    style={{ width: '100%', textAlign: 'left' }}
+                                >
+                                    新建会话
+                                </Button>
+                            </div>
+                        </>
+                    )}
+                />
                 <Button
-                    type="primary"
+                    type="text"
                     size="small"
-                    icon={<PlusOutlined />}
-                    onClick={() => setIsCreateModalVisible(true)}
-                >
-                    新建
-                </Button>
+                    icon={<DeleteOutlined />}
+                    danger
+                    disabled={!currentSessionId}
+                    onClick={() => currentSessionId && handleDeleteSession(currentSessionId)}
+                    title="删除当前会话"
+                />
             </div>
-
-            <div className={styles.sessionList}>
-                {sessions.length === 0 ? (
-                    <Empty description="暂无会话" image={Empty.PRESENTED_IMAGE_SIMPLE} />
-                ) : (
-                    <List
-                        size="small"
-                        dataSource={sessions}
-                        renderItem={(session: Session) => (
-                            <List.Item
-                                className={`${styles.sessionItem} ${session.id === currentSessionId ? styles.active : ''}`}
-                                onClick={() => handleSelectSession(session.id)}
-                                actions={[
-                                    <Dropdown
-                                        key="more"
-                                        menu={{
-                                            items: [
-                                                {
-                                                    key: 'delete',
-                                                    label: '删除',
-                                                    icon: <DeleteOutlined />,
-                                                    danger: true,
-                                                    onClick: (e) => {
-                                                        e.domEvent.stopPropagation()
-                                                        handleDeleteSession(session.id)
-                                                    },
-                                                },
-                                            ],
-                                        }}
-                                        trigger={['click']}
-                                    >
-                                        <Button
-                                            type="text"
-                                            size="small"
-                                            icon={<MoreOutlined />}
-                                            onClick={(e) => e.stopPropagation()}
-                                        />
-                                    </Dropdown>,
-                                ]}
-                            >
-                                <Text ellipsis style={{ flex: 1 }}>{session.name}</Text>
-                            </List.Item>
-                        )}
-                    />
-                )}
-            </div>
-
-            <Divider style={{ margin: '8px 0' }} />
 
             {/* 消息列表区域 */}
             <div className={styles.messagesContainer}>

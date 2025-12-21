@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAllSessions, createSession } from "@/lib/session-store";
+import {
+    getAllSessions,
+    createSession,
+    createWorkspaceAndSession,
+    getWorkspace
+} from "@/lib/session-store";
 
 /**
  * GET /api/sessions - 获取所有会话
@@ -19,14 +24,31 @@ export async function GET() {
 
 /**
  * POST /api/sessions - 创建新会话
+ * 支持两种模式：
+ * 1. 提供 workspaceId: 在指定工作区下创建会话
+ * 2. 不提供 workspaceId: 同时创建工作区和会话
  */
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json()
-        const { name } = body
+        const { name, workspaceId } = body
 
-        const result = await createSession(name)
-        return NextResponse.json(result)
+        if (workspaceId) {
+            // 在指定工作区下创建会话
+            const workspace = getWorkspace(workspaceId)
+            if (!workspace) {
+                return NextResponse.json(
+                    { error: '工作区不存在' },
+                    { status: 404 }
+                )
+            }
+            const session = createSession(workspaceId, name)
+            return NextResponse.json({ session, workspace })
+        } else {
+            // 同时创建工作区和会话（向后兼容）
+            const result = await createWorkspaceAndSession(name)
+            return NextResponse.json(result)
+        }
     } catch (error) {
         console.error('创建会话失败:', error)
         return NextResponse.json(

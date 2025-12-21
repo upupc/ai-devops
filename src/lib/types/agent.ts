@@ -16,6 +16,8 @@ export interface AgentSessionOptions {
     systemPrompt?: string;
     /** 工作目录 */
     cwd?: string;
+    /** 会话ID */
+    sessionId?: string;
 }
 
 /**

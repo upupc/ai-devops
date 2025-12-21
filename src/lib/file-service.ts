@@ -38,9 +38,8 @@ export async function getFileTree(workspaceId: string): Promise<FileNode | null>
     const workspace = getWorkspace(workspaceId)
     if (!workspace) return null
 
-    const buildTree = async (dirPath: string, basePath: string = ''): Promise<FileNode> => {
-        const name = path.basename(dirPath)
-        const relativePath = basePath || name
+    const buildTree = async (dirPath: string, relativePath: string, displayName?: string): Promise<FileNode> => {
+        const name = displayName || path.basename(dirPath)
 
         try {
             const stat = await fs.stat(dirPath)
@@ -50,13 +49,9 @@ export async function getFileTree(workspaceId: string): Promise<FileNode | null>
                 const children: FileNode[] = []
 
                 for (const entry of entries) {
-                    // 跳过隐藏文件和敏感文件
-                    if (entry.startsWith('.') || isSensitiveFile(entry)) {
-                        continue
-                    }
 
                     const childPath = path.join(dirPath, entry)
-                    const childRelativePath = basePath ? `${basePath}/${entry}` : entry
+                    const childRelativePath = relativePath ? `${relativePath}/${entry}` : entry
 
                     try {
                         const childNode = await buildTree(childPath, childRelativePath)
@@ -100,7 +95,8 @@ export async function getFileTree(workspaceId: string): Promise<FileNode | null>
         }
     }
 
-    return buildTree(workspace.path, '')
+    // 根目录使用workspace名称，path为空字符串表示根
+    return buildTree(workspace.path, '', workspace.name)
 }
 
 /**

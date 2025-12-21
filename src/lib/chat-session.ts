@@ -19,14 +19,18 @@ const activeSessions = new Map<string, ChatSession>();
  */
 export class ChatSession {
     public readonly sessionId: string;
+    public readonly workspaceId: string;
     private workspacePath: string;
+    private agentSessionId: string | undefined;
     private agentSession: AgentSession | null = null;
     private subscribers: Set<Subscriber> = new Set();
     private isListening = false;
 
-    constructor(sessionId: string, workspacePath: string) {
+    constructor(sessionId: string, workspaceId: string, workspacePath: string, agentSessionId?: string) {
         this.sessionId = sessionId;
+        this.workspaceId = workspaceId;
         this.workspacePath = workspacePath;
+        this.agentSessionId = agentSessionId;
     }
 
     /**
@@ -50,7 +54,8 @@ export class ChatSession {
         // 3. 确保 AgentSession 已创建
         if (!this.agentSession) {
             this.agentSession = new AgentSession({
-                cwd: this.workspacePath
+                cwd: this.workspacePath,
+                sessionId: this.agentSessionId
             });
         }
 
@@ -72,6 +77,8 @@ export class ChatSession {
 
         try {
             for await (const message of this.agentSession.getOutputStream()) {
+                // 保存 AgentSession 的 sessionId
+                this.saveAgentSessionIdIfNeeded();
                 this.handleSDKMessage(message);
             }
         } catch (error) {
@@ -79,6 +86,19 @@ export class ChatSession {
             this.broadcastError((error as Error).message);
         } finally {
             this.isListening = false;
+        }
+    }
+
+    /**
+     * 保存 AgentSession 的 sessionId（如果尚未保存）
+     */
+    private saveAgentSessionIdIfNeeded(): void {
+        if (!this.agentSession || this.agentSessionId) return;
+
+        const newSessionId = this.agentSession.getSessionId();
+        if (newSessionId) {
+            this.agentSessionId = newSessionId;
+            store.updateSession(this.sessionId, { agentSessionId: newSessionId });
         }
     }
 
@@ -238,14 +258,20 @@ export function getOrCreateChatSession(sessionId: string): ChatSession | null {
         return chatSession;
     }
 
-    // 获取工作区
-    const workspace = store.getWorkspaceBySessionId(sessionId);
+    // 获取会话
+    const session = store.getSession(sessionId);
+    if (!session) {
+        return null;
+    }
+
+    // 获取工作区（cwd 指向 workspace 的独立目录）
+    const workspace = store.getWorkspace(session.workspaceId);
     if (!workspace) {
         return null;
     }
 
-    // 创建新的 ChatSession
-    chatSession = new ChatSession(sessionId, workspace.path);
+    // 创建新的 ChatSession，cwd 指向 workspace 的独立目录，传入保存的 agentSessionId
+    chatSession = new ChatSession(sessionId, workspace.id, workspace.path, session.agentSessionId);
     activeSessions.set(sessionId, chatSession);
 
     return chatSession;

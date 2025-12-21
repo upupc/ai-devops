@@ -60,12 +60,26 @@ function getFileIcon(name: string, isDirectory: boolean): React.ReactNode {
 }
 
 /**
+ * 根目录特殊key
+ */
+const ROOT_KEY = '__root__'
+
+/**
+ * 将节点key转换为实际路径
+ */
+function keyToPath(key: string): string {
+    return key === ROOT_KEY ? '' : key
+}
+
+/**
  * 将 FileNode 转换为 Ant Design Tree 的 DataNode
  */
 function convertToTreeData(node: FileNode): DataNode {
     const isLeaf = node.type === 'file'
+    // 根目录path为空，使用特殊key
+    const nodeKey = node.path === '' ? ROOT_KEY : node.path
     return {
-        key: node.path,
+        key: nodeKey,
         title: node.name,
         icon: ({ expanded }: { expanded?: boolean }) =>
             node.type === 'directory'
@@ -81,7 +95,7 @@ function convertToTreeData(node: FileNode): DataNode {
  */
 export default function FileBrowserPanel() {
     const { state, dispatch } = useAppState()
-    const { workspace, fileTree } = state
+    const { currentWorkspace, fileTree } = state
 
     const [createModalVisible, setCreateModalVisible] = useState(false)
     const [createType, setCreateType] = useState<'file' | 'directory'>('file')
@@ -93,10 +107,10 @@ export default function FileBrowserPanel() {
      * 刷新文件树
      */
     const refreshFileTree = async () => {
-        if (!workspace) return
+        if (!currentWorkspace) return
 
         try {
-            const response = await fetch(`/api/files?workspaceId=${workspace.id}`)
+            const response = await fetch(`/api/files?workspaceId=${currentWorkspace.id}`)
             if (!response.ok) throw new Error('获取文件列表失败')
 
             const data = await response.json()
@@ -110,18 +124,20 @@ export default function FileBrowserPanel() {
     /**
      * 打开文件
      */
-    const handleOpenFile = async (path: string) => {
-        if (!workspace) return
+    const handleOpenFile = async (filePath: string) => {
+        if (!currentWorkspace || !filePath) return
 
         try {
-            const response = await fetch(`/api/files/${encodeURIComponent(path)}?workspaceId=${workspace.id}`)
+            // 对路径的每个段分别编码，保留斜杠
+            const encodedPath = filePath.split('/').map(segment => encodeURIComponent(segment)).join('/')
+            const response = await fetch(`/api/files/${encodedPath}?workspaceId=${currentWorkspace.id}`)
             if (!response.ok) throw new Error('读取文件失败')
 
             const data = await response.json()
             dispatch({
                 type: 'OPEN_FILE',
                 payload: {
-                    path,
+                    path: filePath,
                     content: data.content,
                     modified: false,
                 },
@@ -135,7 +151,7 @@ export default function FileBrowserPanel() {
      * 创建文件或目录
      */
     const handleCreate = async () => {
-        if (!workspace || !newName.trim()) {
+        if (!currentWorkspace || !newName.trim()) {
             message.warning('请输入名称')
             return
         }
@@ -147,7 +163,7 @@ export default function FileBrowserPanel() {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    workspaceId: workspace.id,
+                    workspaceId: currentWorkspace.id,
                     path: fullPath,
                     type: createType,
                     content: createType === 'file' ? '' : undefined,
@@ -168,23 +184,24 @@ export default function FileBrowserPanel() {
     /**
      * 删除文件或目录
      */
-    const handleDelete = async (path: string) => {
-        if (!workspace) return
+    const handleDelete = async (filePath: string) => {
+        if (!currentWorkspace) return
 
         Modal.confirm({
             title: '确认删除',
-            content: `确定要删除 ${path} 吗？`,
+            content: `确定要删除 ${filePath} 吗？`,
             onOk: async () => {
                 try {
+                    const encodedPath = filePath.split('/').map(segment => encodeURIComponent(segment)).join('/')
                     const response = await fetch(
-                        `/api/files/${encodeURIComponent(path)}?workspaceId=${workspace.id}`,
+                        `/api/files/${encodedPath}?workspaceId=${currentWorkspace.id}`,
                         { method: 'DELETE' }
                     )
 
                     if (!response.ok) throw new Error('删除失败')
 
                     await refreshFileTree()
-                    dispatch({ type: 'CLOSE_FILE', payload: path })
+                    dispatch({ type: 'CLOSE_FILE', payload: filePath })
                     message.success('删除成功')
                 } catch {
                     message.error('删除失败')
@@ -194,11 +211,18 @@ export default function FileBrowserPanel() {
     }
 
     /**
-     * 选择节点
+     * 选择节点（单击打开文件）
      */
-    const handleSelect: TreeProps['onSelect'] = (selectedKeys) => {
+    const handleSelect: TreeProps['onSelect'] = (selectedKeys, info) => {
         if (selectedKeys.length > 0) {
-            setSelectedPath(selectedKeys[0] as string)
+            const nodeKey = selectedKeys[0] as string
+            setSelectedPath(nodeKey)
+
+            // 如果是文件，直接打开编辑
+            if (info.node.isLeaf) {
+                const nodePath = keyToPath(nodeKey)
+                handleOpenFile(nodePath)
+            }
         }
     }
 
@@ -207,7 +231,8 @@ export default function FileBrowserPanel() {
      */
     const handleDoubleClick = (_e: React.MouseEvent, node: DataNode) => {
         if (node.isLeaf) {
-            handleOpenFile(node.key as string)
+            const nodePath = keyToPath(node.key as string)
+            handleOpenFile(nodePath)
         }
     }
 
@@ -216,15 +241,17 @@ export default function FileBrowserPanel() {
      */
     const getContextMenuItems = (node: DataNode) => {
         const isDirectory = !node.isLeaf
-        const path = node.key as string
+        const nodeKey = node.key as string
+        const nodePath = keyToPath(nodeKey)
+        const isRoot = nodeKey === ROOT_KEY
 
         const items = []
 
-        if (!node.isLeaf) {
+        if (!node.isLeaf && !isRoot) {
             items.push({
                 key: 'open',
                 label: '打开',
-                onClick: () => handleOpenFile(path),
+                onClick: () => handleOpenFile(nodePath),
             })
         }
 
@@ -236,7 +263,7 @@ export default function FileBrowserPanel() {
                     icon: <PlusOutlined />,
                     onClick: () => {
                         setCreateType('file')
-                        setCreatePath(path)
+                        setCreatePath(nodePath)
                         setCreateModalVisible(true)
                     },
                 },
@@ -246,31 +273,34 @@ export default function FileBrowserPanel() {
                     icon: <FolderOutlined />,
                     onClick: () => {
                         setCreateType('directory')
-                        setCreatePath(path)
+                        setCreatePath(nodePath)
                         setCreateModalVisible(true)
                     },
                 }
             )
         }
 
-        items.push(
-            { type: 'divider' as const },
-            {
-                key: 'delete',
-                label: '删除',
-                icon: <DeleteOutlined />,
-                danger: true,
-                onClick: () => handleDelete(path),
-            }
-        )
+        // 根目录不允许删除
+        if (!isRoot) {
+            items.push(
+                { type: 'divider' as const },
+                {
+                    key: 'delete',
+                    label: '删除',
+                    icon: <DeleteOutlined />,
+                    danger: true,
+                    onClick: () => handleDelete(nodePath),
+                }
+            )
+        }
 
         return items
     }
 
-    if (!workspace) {
+    if (!currentWorkspace) {
         return (
             <div className={styles.emptyContainer}>
-                <Empty description="请选择或创建一个会话" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+                <Empty description="请选择工作区" image={Empty.PRESENTED_IMAGE_SIMPLE} />
             </div>
         )
     }
@@ -327,7 +357,7 @@ export default function FileBrowserPanel() {
                 ) : (
                     <Tree
                         showIcon
-                        defaultExpandAll
+                        defaultExpandedKeys={[ROOT_KEY]}
                         treeData={treeData}
                         onSelect={handleSelect}
                         selectedKeys={selectedPath ? [selectedPath] : []}
