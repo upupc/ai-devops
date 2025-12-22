@@ -1,0 +1,540 @@
+/* Claude.ai 风格的聊天页面样式 */
+
+/* 容器布局 */
+.container {
+    display: flex;
+    height: 100vh;
+    background-color: #f9fafb;
+    overflow: hidden;
+}
+
+/* 加载状态 */
+.loadingContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    gap: 16px;
+    color: #666;
+}
+
+/* 左侧边栏 */
+.sidebar {
+    width: 260px;
+    background-color: #1a1a1a;
+    display: flex;
+    flex-direction: column;
+    transition: width 0.2s ease;
+    flex-shrink: 0;
+}
+
+.sidebar.collapsed {
+    width: 0;
+    overflow: hidden;
+}
+
+.sidebarHeader {
+    padding: 12px;
+    display: flex;
+    gap: 8px;
+}
+
+.newChatButton {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background-color: #2a2a2a;
+    border: 1px solid #3a3a3a;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.newChatButton:hover {
+    background-color: #3a3a3a;
+}
+
+.iconButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background-color: #2a2a2a;
+    border: 1px solid #3a3a3a;
+    border-radius: 8px;
+    color: #999;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.iconButton:hover {
+    background-color: #3a3a3a;
+    color: #fff;
+}
+
+/* 工作区选择器 */
+.workspaceSelector {
+    margin: 0 12px 12px;
+    background-color: #2a2a2a;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.workspaceSelectorHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    border-bottom: 1px solid #3a3a3a;
+    color: #999;
+    font-size: 12px;
+}
+
+.addWorkspaceBtn {
+    background: none;
+    border: none;
+    color: #999;
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: all 0.15s ease;
+}
+
+.addWorkspaceBtn:hover {
+    background-color: #3a3a3a;
+    color: #fff;
+}
+
+.workspaceList {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.workspaceItem {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    color: #ccc;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.workspaceItem:hover {
+    background-color: #3a3a3a;
+}
+
+.workspaceItem.active {
+    background-color: #D97757;
+    color: #fff;
+}
+
+/* 当前工作区显示 */
+.currentWorkspace {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 12px 12px;
+    padding: 10px 12px;
+    background-color: #2a2a2a;
+    border-radius: 8px;
+    color: #D97757;
+    font-size: 13px;
+}
+
+/* 会话列表 */
+.sessionList {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 8px;
+}
+
+.sessionItem {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    margin: 2px 0;
+    border-radius: 8px;
+    color: #ccc;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.sessionItem:hover {
+    background-color: #2a2a2a;
+}
+
+.sessionItem.active {
+    background-color: #2a2a2a;
+}
+
+.sessionIcon {
+    color: #666;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.sessionName {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.deleteButton {
+    opacity: 0;
+    background: none;
+    border: none;
+    color: #666;
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: all 0.15s ease;
+}
+
+.sessionItem:hover .deleteButton {
+    opacity: 1;
+}
+
+.deleteButton:hover {
+    color: #ff4d4f;
+    background-color: rgba(255, 77, 79, 0.1);
+}
+
+/* 侧边栏底部 */
+.sidebarFooter {
+    padding: 12px;
+    border-top: 1px solid #2a2a2a;
+}
+
+.settingsButton {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 12px;
+    background: none;
+    border: none;
+    border-radius: 8px;
+    color: #999;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.settingsButton:hover {
+    background-color: #2a2a2a;
+    color: #fff;
+}
+
+/* 主内容区域 */
+.main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background-color: #fff;
+}
+
+/* 消息区域 */
+.messagesContainer {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 0;
+}
+
+.messagesWrapper {
+    max-width: 768px;
+    margin: 0 auto;
+    padding: 0 24px;
+}
+
+/* 空状态 */
+.emptyState {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 60vh;
+    text-align: center;
+    color: #666;
+}
+
+.emptyState h2 {
+    margin: 24px 0 8px;
+    font-size: 24px;
+    font-weight: 500;
+    color: #1a1a1a;
+}
+
+.emptyState p {
+    font-size: 15px;
+    color: #666;
+}
+
+/* 消息行 */
+.messageRow {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 24px;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.userRow {
+    justify-content: flex-end;
+}
+
+.assistantRow {
+    justify-content: flex-start;
+}
+
+/* 头像 */
+.avatar {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* 消息内容 */
+.messageContent {
+    max-width: 85%;
+    line-height: 1.6;
+    font-size: 15px;
+}
+
+.userMessage {
+    background-color: #f0f0f0;
+    padding: 12px 16px;
+    border-radius: 18px 18px 4px 18px;
+    color: #1a1a1a;
+}
+
+.userMessage p {
+    margin: 0;
+}
+
+.assistantMessage {
+    color: #1a1a1a;
+}
+
+/* Markdown 样式 */
+.paragraph {
+    margin: 0 0 12px;
+}
+
+.paragraph:last-child {
+    margin-bottom: 0;
+}
+
+.list {
+    margin: 0 0 12px;
+    padding-left: 24px;
+}
+
+.listItem {
+    margin-bottom: 4px;
+}
+
+.heading1 {
+    font-size: 1.5em;
+    font-weight: 600;
+    margin: 16px 0 8px;
+}
+
+.heading2 {
+    font-size: 1.3em;
+    font-weight: 600;
+    margin: 14px 0 8px;
+}
+
+.heading3 {
+    font-size: 1.1em;
+    font-weight: 600;
+    margin: 12px 0 8px;
+}
+
+.inlineCode {
+    background-color: #f0f0f0;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+    font-size: 0.9em;
+}
+
+.blockquote {
+    margin: 12px 0;
+    padding: 8px 16px;
+    border-left: 4px solid #D97757;
+    background-color: #fdf6f4;
+    color: #666;
+}
+
+.link {
+    color: #D97757;
+    text-decoration: none;
+}
+
+.link:hover {
+    text-decoration: underline;
+}
+
+/* 输入区域 */
+.inputContainer {
+    padding: 16px 24px 24px;
+    background: linear-gradient(to top, #fff 80%, transparent);
+}
+
+.inputWrapper {
+    max-width: 768px;
+    margin: 0 auto;
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    background-color: #f9fafb;
+    border: 1px solid #e5e5e5;
+    border-radius: 24px;
+    padding: 8px 8px 8px 16px;
+    transition: all 0.2s ease;
+}
+
+.inputWrapper:focus-within {
+    border-color: #D97757;
+    box-shadow: 0 0 0 2px rgba(217, 119, 87, 0.1);
+}
+
+.textarea {
+    flex: 1;
+    border: none;
+    background: none;
+    resize: none;
+    font-size: 15px;
+    line-height: 1.5;
+    padding: 8px 0;
+    max-height: 200px;
+    color: #1a1a1a;
+    outline: none;
+}
+
+.textarea::placeholder {
+    color: #999;
+}
+
+.textarea:disabled {
+    cursor: not-allowed;
+}
+
+.sendButton {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #e5e5e5;
+    border: none;
+    border-radius: 50%;
+    color: #999;
+    cursor: not-allowed;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+}
+
+.sendButton.active {
+    background-color: #D97757;
+    color: #fff;
+    cursor: pointer;
+}
+
+.sendButton.active:hover {
+    background-color: #c66848;
+}
+
+/* 免责声明 */
+.disclaimer {
+    max-width: 768px;
+    margin: 8px auto 0;
+    text-align: center;
+    font-size: 12px;
+    color: #999;
+}
+
+/* 滚动条样式 */
+.sessionList::-webkit-scrollbar,
+.messagesContainer::-webkit-scrollbar,
+.workspaceList::-webkit-scrollbar {
+    width: 6px;
+}
+
+.sessionList::-webkit-scrollbar-track,
+.messagesContainer::-webkit-scrollbar-track,
+.workspaceList::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.sessionList::-webkit-scrollbar-thumb,
+.workspaceList::-webkit-scrollbar-thumb {
+    background-color: #3a3a3a;
+    border-radius: 3px;
+}
+
+.messagesContainer::-webkit-scrollbar-thumb {
+    background-color: #ddd;
+    border-radius: 3px;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .sidebar {
+        position: fixed;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        z-index: 100;
+    }
+
+    .sidebar.collapsed {
+        width: 0;
+    }
+
+    .messagesWrapper {
+        padding: 0 16px;
+    }
+
+    .inputContainer {
+        padding: 12px 16px 16px;
+    }
+
+    .messageContent {
+        max-width: 90%;
+    }
+}

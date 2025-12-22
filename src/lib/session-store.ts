@@ -92,11 +92,13 @@ export function getWorkspace(workspaceId: string): Workspace | undefined {
 /**
  * 创建新工作区
  * 创建独立目录并复制 setting-template 内容
+ * @param name 工作区名称
+ * @param id 可选的工作区 ID，不传则自动生成
  */
-export async function createWorkspace(name: string): Promise<Workspace> {
+export async function createWorkspace(name: string, id?: string): Promise<Workspace> {
     ensureWorkspacesRoot();
 
-    const workspaceId = generateId();
+    const workspaceId = id || generateId();
     const workspacePath = path.join(WORKSPACES_ROOT, workspaceId);
     const now = new Date().toISOString();
 
@@ -122,6 +124,18 @@ export async function createWorkspace(name: string): Promise<Workspace> {
         createdAt: new Date(now),
         updatedAt: new Date(now)
     };
+}
+
+/**
+ * 获取或创建工作区
+ * 如果指定 ID 的工作区存在则返回，否则创建新的
+ */
+export async function getOrCreateWorkspace(id: string, name: string): Promise<Workspace> {
+    const existing = getWorkspace(id);
+    if (existing) {
+        return existing;
+    }
+    return createWorkspace(name, id);
 }
 
 /**

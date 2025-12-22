@@ -5,6 +5,8 @@
 
 import { query, type SDKMessage, type SDKUserMessage } from "@anthropic-ai/claude-agent-sdk";
 import type { AgentSessionOptions } from "./types/agent";
+import * as fs from "fs";
+import * as path from "path";
 
 /**
  * 系统提示词
@@ -130,15 +132,34 @@ export class AgentSession {
     constructor(options?: AgentSessionOptions) {
         // 使用 Streaming Input 模式启动 query
         // 将消息队列作为 AsyncIterable 传入
+
+        // 读取工作空间目录下的 SYSTEM.md 作为系统提示词
+        let systemPrompt: { type: 'preset'; preset: 'claude_code' } | string = {
+            type: 'preset',
+            preset: 'claude_code'
+        };
+
+        if (options?.cwd) {
+            const systemMdPath = path.join(options.cwd, "SYSTEM.md");
+            try {
+                if (fs.existsSync(systemMdPath)) {
+                    const content = fs.readFileSync(systemMdPath, "utf-8").trim();
+                    if (content) {
+                        systemPrompt = content;
+                    }
+                }
+            } catch (error) {
+                // 读取失败时使用默认值，忽略错误
+                console.error("Failed to read SYSTEM.md:", error);
+            }
+        }
+
         const queryResult = query({
             prompt: this.queue as AsyncIterable<SDKUserMessage>,
             options: {
                 maxTurns: options?.maxTurns ?? 100,
                 model: options?.model ?? "claude-opus-4-20250514",
-                systemPrompt: {
-                    type: 'preset',
-                    preset: 'claude_code'
-                },
+                systemPrompt: systemPrompt,
                 cwd: options?.cwd,
                 permissionMode: "bypassPermissions",
                 allowDangerouslySkipPermissions:true,
