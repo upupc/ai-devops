@@ -80,6 +80,12 @@ main() {
         exit 1
     fi
 
+    # 检查是否已安装依赖
+    if [ ! -d "node_modules" ]; then
+        echo "未检测到依赖，先执行安装..."
+        npm install
+    fi
+
     # 检查是否已构建
     if [ ! -d ".next" ]; then
         echo "未检测到构建产物，先执行构建..."
