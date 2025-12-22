@@ -38,6 +38,7 @@ coverage/
 
 # 工作区目录 (运行时生成)
 workspaces/
+!src/app/api/workspaces/
 
 # TypeScript
 *.tsbuildinfo
