@@ -9,7 +9,7 @@ import path from "path";
 /**
  * 数据库文件路径
  */
-const DB_PATH = path.join(process.cwd(), "data", "ai-devops.db");
+const DB_PATH = path.join(process.cwd(), ".data", "ai-devops.db");
 
 /**
  * 全局数据库实例（避免 HMR 导致多次初始化）

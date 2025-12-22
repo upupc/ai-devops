@@ -42,3 +42,6 @@ workspaces/
 # TypeScript
 *.tsbuildinfo
 next-env.d.ts
+
+package-lock.json
+.data
