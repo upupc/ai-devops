@@ -36,7 +36,7 @@ function printMessage(message: MyMessage) {
     }
 }
 
-
+console.log("workspacePath:"+workspacePath);
 
 const queryResult = query({
     prompt: '你能搜索下深圳今天的天气吗',
