@@ -60,7 +60,13 @@ export class ChatSession {
         }
 
         // 4. 发送到 Agent
-        this.agentSession.sendMessage(content);
+        try{
+            this.agentSession.sendMessage(content);
+        }catch (error){
+            console.error(`ChatSession ${this.sessionId} error:`, error);
+            this.broadcastError((error as Error).message);
+        }
+
 
         // 5. 开始监听响应（如果还没开始）
         if (!this.isListening) {

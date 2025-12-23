@@ -1,115 +1,84 @@
 'use client'
 
-import { Layout, Typography, Button, Space } from 'antd'
-import { RobotOutlined, ArrowLeftOutlined, FolderOutlined } from '@ant-design/icons'
-import ChatPanel from '@/components/ChatPanel'
-import WorkspacePanel from '@/components/WorkspacePanel'
-import FileBrowserPanel from '@/components/FileBrowserPanel'
-import WorkspaceSelector from '@/components/WorkspaceSelector'
-import { AppProvider, useAppState } from '@/lib/store'
+import { Layout, Typography, Card, Row, Col } from 'antd'
+import { RobotOutlined, MessageOutlined, CodeOutlined } from '@ant-design/icons'
+import Link from 'next/link'
 
-const { Header } = Layout
+const { Header, Content } = Layout
 
 /**
- * 主内容区域组件
+ * 首页 - 应用入口选择页面
  */
-function MainContent() {
-    const { state, dispatch } = useAppState()
-    const { currentWorkspace } = state
-
-    /**
-     * 返回工作区选择页面
-     */
-    const handleBackToWorkspaces = () => {
-        dispatch({ type: 'SET_CURRENT_WORKSPACE', payload: null })
-        dispatch({ type: 'RESET_SESSION_STATE' })
-    }
-
-    // 未选择工作区时显示工作区选择页面
-    if (!currentWorkspace) {
-        return (
-            <div style={{ height: 'calc(100vh - 64px)', width: '100%' }}>
-                <WorkspaceSelector />
-            </div>
-        )
-    }
-
-    // 已选择工作区时显示会话页面
+export default function HomePage() {
     return (
-        <>
-            {/* 工作区导航栏 */}
-            <div style={{
-                height: 40,
-                background: '#fafafa',
-                borderBottom: '1px solid #f0f0f0',
+        <Layout style={{ minHeight: '100vh' }}>
+            <Header style={{
                 display: 'flex',
                 alignItems: 'center',
                 padding: '0 16px',
+                background: '#001529'
             }}>
-                <Space>
-                    <Button
-                        type="text"
-                        size="small"
-                        icon={<ArrowLeftOutlined />}
-                        onClick={handleBackToWorkspaces}
-                    >
-                        返回
-                    </Button>
-                    <span style={{ color: '#999' }}>|</span>
-                    <FolderOutlined style={{ color: '#1890ff' }} />
-                    <Typography.Text strong>{currentWorkspace.name}</Typography.Text>
-                </Space>
-            </div>
-
-            {/* 三栏布局: 聊天面板 | 文件浏览器 | 编辑器面板 */}
-            <div style={{
-                display: 'grid',
-                gridTemplateColumns: '420px 200px 1fr',
-                height: 'calc(100vh - 104px)',
-                width: '100%'
+                <RobotOutlined style={{ fontSize: 24, color: '#fff', marginRight: 12 }} />
+                <Typography.Title level={4} style={{ margin: 0, color: '#fff' }}>
+                    AI DevOps
+                </Typography.Title>
+            </Header>
+            <Content style={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                padding: 24,
+                background: '#f5f5f5'
             }}>
-                <div style={{
-                    background: '#fff',
-                    borderRight: '1px solid #f0f0f0',
-                    overflow: 'hidden'
-                }}>
-                    <ChatPanel />
-                </div>
-                <div style={{
-                    background: '#fff',
-                    borderRight: '1px solid #f0f0f0',
-                    overflow: 'hidden'
-                }}>
-                    <FileBrowserPanel />
-                </div>
-                <div style={{
-                    background: '#f5f5f5',
-                    overflow: 'hidden'
-                }}>
-                    <WorkspacePanel />
-                </div>
-            </div>
-        </>
-    )
-}
-
-export default function Home() {
-    return (
-        <AppProvider>
-            <Layout style={{ height: '100vh' }}>
-                <Header style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    padding: '0 16px',
-                    background: '#001529'
-                }}>
-                    <RobotOutlined style={{ fontSize: 24, color: '#fff', marginRight: 12 }} />
-                    <Typography.Title level={4} style={{ margin: 0, color: '#fff' }}>
-                        AI DevOps Agent
-                    </Typography.Title>
-                </Header>
-                <MainContent />
-            </Layout>
-        </AppProvider>
+                <Row gutter={[48, 48]} style={{ maxWidth: 2000, width: '100%' }}>
+                    <Col xs={24} sm={12}>
+                        <Link href="/chat" style={{ textDecoration: 'none' }}>
+                            <Card
+                                hoverable
+                                style={{ height: 480, textAlign: 'center' }}
+                                styles={{ body: {
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    justifyContent: 'center',
+                                    alignItems: 'center',
+                                    height: '100%'
+                                }}}
+                            >
+                                <MessageOutlined style={{ fontSize: 72, color: '#1890ff', marginBottom: 24 }} />
+                                <Typography.Title level={3} style={{ margin: 0 }}>
+                                    Chat
+                                </Typography.Title>
+                                <Typography.Text type="secondary" style={{ marginTop: 12, fontSize: 16 }}>
+                                    智能对话助手
+                                </Typography.Text>
+                            </Card>
+                        </Link>
+                    </Col>
+                    <Col xs={24} sm={12}>
+                        <Link href="/agent" style={{ textDecoration: 'none' }}>
+                            <Card
+                                hoverable
+                                style={{ height: 480, textAlign: 'center' }}
+                                styles={{ body: {
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    justifyContent: 'center',
+                                    alignItems: 'center',
+                                    height: '100%'
+                                }}}
+                            >
+                                <CodeOutlined style={{ fontSize: 72, color: '#52c41a', marginBottom: 24 }} />
+                                <Typography.Title level={3} style={{ margin: 0 }}>
+                                    Agent
+                                </Typography.Title>
+                                <Typography.Text type="secondary" style={{ marginTop: 12, fontSize: 16 }}>
+                                    AI DevOps 工作台
+                                </Typography.Text>
+                            </Card>
+                        </Link>
+                    </Col>
+                </Row>
+            </Content>
+        </Layout>
     )
 }
