@@ -7,6 +7,7 @@ import { query, type SDKMessage, type SDKUserMessage } from "@anthropic-ai/claud
 import type { AgentSessionOptions } from "./types/agent";
 import * as fs from "fs";
 import * as path from "path";
+import {Query} from "@anthropic-ai/claude-agent-sdk/entrypoints/agentSdkTypes";
 
 /**
  * 系统提示词
@@ -128,6 +129,7 @@ export class AgentSession {
     private queue = new MessageQueue();
     private outputIterator: AsyncIterator<SDKMessage> | null = null;
     private sessionId: string | null = null;
+    private queryResult: Query | null = null;
 
     constructor(options?: AgentSessionOptions) {
         // 使用 Streaming Input 模式启动 query
@@ -154,11 +156,14 @@ export class AgentSession {
             }
         }
 
+        // 优先使用传入的model参数，否则使用默认值
+        const model = options?.model || "claude-sonnet-4-5-20250929";
+
         const queryResult = query({
             prompt: this.queue as AsyncIterable<SDKUserMessage>,
             options: {
                 maxTurns: options?.maxTurns ?? 100,
-                model: options?.model ?? "claude-opus-4-20250514",
+                model: model,
                 systemPrompt: systemPrompt,
                 cwd: options?.cwd,
                 permissionMode: "bypassPermissions",
@@ -173,15 +178,19 @@ export class AgentSession {
             }
         });
 
+        this.queryResult = queryResult;
         this.outputIterator = queryResult[Symbol.asyncIterator]();
     }
 
     /**
      * 发送消息到 Agent
      */
-    sendMessage(content: string): void {
+    sendMessage(model:string|undefined,content: string): void {
         if (this.queue.isClosed()) {
             throw new Error("Session is closed");
+        }
+        if(model){
+            this.queryResult?.setModel(model);
         }
         this.queue.push(content);
     }

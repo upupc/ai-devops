@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
         async start(controller) {
             try {
                 const body = await request.json();
-                const { sessionId, message } = body;
+                const { sessionId, message, model } = body;
 
                 if (!sessionId || !message) {
                     controller.enqueue(encoder.encode('data: {"error": "缺少必要参数"}\n\n'));
@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
                 chatSession.subscribe(subscriber);
 
                 // 发送消息到 Agent
-                chatSession.sendMessage(message);
+                chatSession.sendMessage(model, message);
 
             } catch (error) {
                 console.error("Chat API 错误:", error);

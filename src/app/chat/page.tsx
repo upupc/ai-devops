@@ -1,8 +1,16 @@
 'use client'
 
 import React, { useState, useEffect, useRef, useCallback } from 'react'
-import { PlusOutlined, MessageOutlined, DeleteOutlined, SendOutlined, LoadingOutlined } from '@ant-design/icons'
-import { message as antMessage, Popconfirm, Spin } from 'antd'
+import {
+    PlusOutlined,
+    MessageOutlined,
+    DeleteOutlined,
+    LoadingOutlined,
+    ClockCircleOutlined,
+    ArrowUpOutlined,
+    DownOutlined
+} from '@ant-design/icons'
+import { message as antMessage, Popconfirm, Spin, Input, Button, Select } from 'antd'
 import ReactMarkdown from 'react-markdown'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
@@ -21,6 +29,7 @@ interface Session {
     id: string
     name: string
     workspaceId: string
+    model?: string
     createdAt: string
     updatedAt: string
 }
@@ -121,7 +130,7 @@ export default function ChatPage() {
 
     // Refs
     const messagesEndRef = useRef<HTMLDivElement>(null)
-    const textareaRef = useRef<HTMLTextAreaElement>(null)
+    const [selectedModel, setSelectedModel] = useState('claude-sonnet-4-5-20250929')
 
     // 滚动到底部
     const scrollToBottom = useCallback(() => {
@@ -153,14 +162,6 @@ export default function ChatPage() {
     useEffect(() => {
         scrollToBottom()
     }, [messages, scrollToBottom])
-
-    // 自动调整输入框高度
-    useEffect(() => {
-        if (textareaRef.current) {
-            textareaRef.current.style.height = 'auto'
-            textareaRef.current.style.height = Math.min(textareaRef.current.scrollHeight, 200) + 'px'
-        }
-    }, [inputValue])
 
     // 初始化默认工作区
     const initDefaultWorkspace = async () => {
@@ -235,6 +236,7 @@ export default function ChatPage() {
                 setSessions(prev => [session, ...prev])
                 setCurrentSession(session)
                 setMessages([])
+                return session
             }
         } catch (error) {
             console.error('Failed to create session:', error)
@@ -266,15 +268,18 @@ export default function ChatPage() {
     const handleSendMessage = async () => {
         if (!inputValue.trim() || isLoading) return
 
-        if (!currentSession) {
+        let activeSession = currentSession
+        if (!activeSession) {
             // 如果没有当前会话，先创建一个
-            await createSession()
-            return
+            activeSession = await createSession()
+            if (!activeSession) {
+                return
+            }
         }
 
         const userMessage: Message = {
             id: `user-${Date.now()}`,
-            sessionId: currentSession.id,
+            sessionId: activeSession.id,
             role: 'user',
             content: inputValue.trim(),
             createdAt: new Date().toISOString(),
@@ -288,7 +293,7 @@ export default function ChatPage() {
         const assistantMessageId = `assistant-${Date.now()}`
         const assistantMessage: Message = {
             id: assistantMessageId,
-            sessionId: currentSession.id,
+            sessionId: activeSession.id,
             role: 'assistant',
             content: '',
             createdAt: new Date().toISOString(),
@@ -300,8 +305,9 @@ export default function ChatPage() {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    sessionId: currentSession.id,
+                    sessionId: activeSession.id,
                     message: userMessage.content,
+                    model: selectedModel,
                 }),
             })
 
@@ -453,7 +459,18 @@ export default function ChatPage() {
                                         {message.role === 'user' ? (
                                             <p>{message.content}</p>
                                         ) : (
-                                            <MarkdownContent content={message.content || '思考中...'} />
+                                            message.content ? (
+                                                <MarkdownContent content={message.content} />
+                                            ) : (
+                                                <div className={styles.thinkingIndicator}>
+                                                    <span>思考中</span>
+                                                    <span className={styles.thinkingDots}>
+                                                        <span />
+                                                        <span />
+                                                        <span />
+                                                    </span>
+                                                </div>
+                                            )
                                         )}
                                     </div>
                                 </div>
@@ -464,25 +481,59 @@ export default function ChatPage() {
                 </div>
 
                 {/* 底部输入区域 */}
-                <div className={styles.inputContainer}>
-                    <div className={styles.inputWrapper}>
-                        <textarea
-                            ref={textareaRef}
-                            className={styles.textarea}
-                            placeholder={currentWorkspace ? "给 Claude 发送消息..." : "请先选择工作区"}
+                <div className={styles.composerContainer}>
+                    <div className={styles.composer}>
+                        <Input.TextArea
                             value={inputValue}
                             onChange={(e) => setInputValue(e.target.value)}
                             onKeyDown={handleKeyDown}
+                            placeholder={currentSession ? '有什么我可以帮助你的吗？' : '直接输入以开始新对话'}
+                            autoSize={{ minRows: 3, maxRows: 10 }}
                             disabled={!currentWorkspace || isLoading}
-                            rows={1}
+                            className={styles.composerTextarea}
                         />
-                        <button
-                            className={`${styles.sendButton} ${inputValue.trim() && !isLoading ? styles.active : ''}`}
-                            onClick={handleSendMessage}
-                            disabled={!inputValue.trim() || isLoading || !currentWorkspace}
-                        >
-                            {isLoading ? <LoadingOutlined spin /> : <SendOutlined />}
-                        </button>
+                        <div className={styles.composerFooter}>
+                            <div className={styles.composerLeft}>
+                                <Button
+                                    type="text"
+                                    icon={<PlusOutlined />}
+                                    className={styles.composerIconButton}
+                                    disabled={isLoading}
+                                    title="添加（敬请期待）"
+                                />
+                                <Button
+                                    type="text"
+                                    icon={<ClockCircleOutlined />}
+                                    className={styles.composerIconButton}
+                                    disabled={isLoading}
+                                    title="历史（敬请期待）"
+                                />
+                            </div>
+                            <div className={styles.composerRight}>
+                                <Select
+                                    value={selectedModel}
+                                    onChange={setSelectedModel}
+                                    options={[
+                                        { value: 'claude-haiku-4-5-20251001', label: 'Haiku 4.5' },
+                                        { value: 'claude-sonnet-4-5-20250929', label: 'Sonnet 4.5' },
+                                        { value: 'claude-opus-4-5-20251101', label: 'Opus 4.5' },
+                                    ]}
+                                    className={styles.modelSelect}
+                                    bordered={false}
+                                    suffixIcon={<DownOutlined />}
+                                    disabled={isLoading}
+                                    popupMatchSelectWidth={false}
+                                />
+                                <Button
+                                    type="text"
+                                    icon={isLoading ? <LoadingOutlined spin /> : <ArrowUpOutlined />}
+                                    onClick={handleSendMessage}
+                                    disabled={!currentWorkspace || isLoading || !inputValue.trim()}
+                                    className={styles.sendButton}
+                                    aria-label="发送"
+                                />
+                            </div>
+                        </div>
                     </div>
                     <p className={styles.disclaimer}>
                         Claude 可能会犯错。请核实重要信息。

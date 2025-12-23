@@ -20,6 +20,7 @@ export interface Session {
     name: string
     workspaceId: string
     agentSessionId?: string  // claude-agent-sdk 会话 ID
+    model?: string
     createdAt: Date
     updatedAt: Date
 }

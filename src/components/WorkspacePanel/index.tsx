@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useCallback } from 'react'
+import React, { useEffect, useCallback, useState } from 'react'
 import { Tabs, Empty, message, Button, Spin } from 'antd'
 import { CloseOutlined, SaveOutlined } from '@ant-design/icons'
 import dynamic from 'next/dynamic'
@@ -60,6 +60,7 @@ function getLanguageFromPath(path: string): string {
 export default function WorkspacePanel() {
     const { state, dispatch } = useAppState()
     const { currentWorkspace, openFiles, activeFilePath } = state
+    const [isLoadingFile, setIsLoadingFile] = useState(false)
 
     /**
      * 保存文件
@@ -68,6 +69,7 @@ export default function WorkspacePanel() {
         const file = openFiles.find(f => f.path === filePath)
         if (!file || !currentWorkspace) return
 
+        setIsLoadingFile(true)
         try {
             // 对路径的每个段分别编码，保留斜杠
             const encodedPath = filePath.split('/').map(segment => encodeURIComponent(segment)).join('/')
@@ -86,6 +88,8 @@ export default function WorkspacePanel() {
             message.success('文件保存成功')
         } catch {
             message.error('保存文件失败')
+        } finally {
+            setIsLoadingFile(false)
         }
     }, [openFiles, currentWorkspace, dispatch])
 
@@ -195,11 +199,11 @@ export default function WorkspacePanel() {
                 <Button
                     type="text"
                     size="small"
-                    icon={<SaveOutlined />}
+                    icon={isLoadingFile ? <Spin size="small" /> : <SaveOutlined />}
                     onClick={() => activeFilePath && handleSaveFile(activeFilePath)}
-                    disabled={!activeFilePath || !openFiles.find(f => f.path === activeFilePath)?.modified}
+                    disabled={!activeFilePath || !openFiles.find(f => f.path === activeFilePath)?.modified || isLoadingFile}
                 >
-                    保存
+                    {isLoadingFile ? '保存中...' : '保存'}
                 </Button>
             </div>
             <Tabs

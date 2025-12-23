@@ -190,6 +190,7 @@ function rowToSession(row: SessionRow): Session {
         name: row.name,
         workspaceId: row.workspace_id,
         agentSessionId: row.agent_session_id || undefined,
+        model: row.model || undefined,
         createdAt: new Date(row.created_at),
         updatedAt: new Date(row.updated_at)
     };
@@ -229,7 +230,7 @@ export function getSession(sessionId: string): Session | undefined {
 /**
  * 在指定工作区下创建新会话
  */
-export function createSession(workspaceId: string, name: string): Session {
+export function createSession(workspaceId: string, name: string, model?: string): Session {
     const workspace = getWorkspace(workspaceId);
     if (!workspace) {
         throw new Error(`Workspace ${workspaceId} not found`);
@@ -237,12 +238,13 @@ export function createSession(workspaceId: string, name: string): Session {
 
     const sessionId = generateId();
     const now = new Date().toISOString();
+    const sessionModel = model || null;
 
     const stmt = db.prepare(`
-        INSERT INTO sessions (id, name, workspace_id, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?)
+        INSERT INTO sessions (id, name, workspace_id, model, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?)
     `);
-    stmt.run(sessionId, name || `会话 ${Date.now()}`, workspaceId, now, now);
+    stmt.run(sessionId, name || `会话 ${Date.now()}`, workspaceId, sessionModel, now, now);
 
     // 更新工作区的 updated_at
     const updateWorkspaceStmt = db.prepare(`
@@ -254,6 +256,7 @@ export function createSession(workspaceId: string, name: string): Session {
         id: sessionId,
         name: name || `会话 ${Date.now()}`,
         workspaceId,
+        model: sessionModel || undefined,
         createdAt: new Date(now),
         updatedAt: new Date(now)
     };
@@ -271,23 +274,36 @@ export async function createWorkspaceAndSession(name: string): Promise<{ workspa
 /**
  * 更新会话
  */
-export function updateSession(sessionId: string, updates: Partial<Pick<Session, 'name' | 'agentSessionId'>>): Session | undefined {
+export function updateSession(
+    sessionId: string,
+    updates: {
+        name?: string;
+        agentSessionId?: string | null;
+        model?: string | null;
+    }
+): Session | undefined {
     const session = getSession(sessionId);
     if (!session) return undefined;
 
     const now = new Date().toISOString();
     const newName = updates.name ?? session.name;
-    const newAgentSessionId = updates.agentSessionId ?? session.agentSessionId;
+    const hasAgentSessionId = Object.prototype.hasOwnProperty.call(updates, "agentSessionId");
+    const newAgentSessionId = hasAgentSessionId
+        ? updates.agentSessionId ?? null
+        : session.agentSessionId ?? null;
+    const hasModel = Object.prototype.hasOwnProperty.call(updates, "model");
+    const newModel = hasModel ? updates.model ?? null : session.model ?? null;
 
     const stmt = db.prepare(`
-        UPDATE sessions SET name = ?, agent_session_id = ?, updated_at = ? WHERE id = ?
+        UPDATE sessions SET name = ?, agent_session_id = ?, model = ?, updated_at = ? WHERE id = ?
     `);
-    stmt.run(newName, newAgentSessionId || null, now, sessionId);
+    stmt.run(newName, newAgentSessionId, newModel, now, sessionId);
 
     return {
         ...session,
         name: newName,
-        agentSessionId: newAgentSessionId,
+        agentSessionId: newAgentSessionId || undefined,
+        model: newModel || undefined,
         updatedAt: new Date(now)
     };
 }

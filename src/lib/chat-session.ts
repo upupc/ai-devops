@@ -23,20 +23,30 @@ export class ChatSession {
     private workspacePath: string;
     private agentSessionId: string | undefined;
     private agentSession: AgentSession | null = null;
+    private modelId: string | undefined;
     private subscribers: Set<Subscriber> = new Set();
     private isListening = false;
 
-    constructor(sessionId: string, workspaceId: string, workspacePath: string, agentSessionId?: string) {
+    constructor(sessionId: string, workspaceId: string, workspacePath: string, agentSessionId?: string, modelId?: string) {
         this.sessionId = sessionId;
         this.workspaceId = workspaceId;
         this.workspacePath = workspacePath;
         this.agentSessionId = agentSessionId;
+        this.modelId = modelId;
     }
 
     /**
      * 发送用户消息
      */
-    sendMessage(content: string): void {
+    sendMessage(model: string, content: string): void {
+        let nextModelId:string|undefined = model;
+        if (model && model !== this.modelId) {
+            this.modelId = model;
+            store.updateSession(this.sessionId, { model: model });
+        }else{
+            nextModelId = this.modelId;
+        }
+
         // 1. 存储用户消息
         store.addMessage(this.sessionId, {
             sessionId: this.sessionId,
@@ -55,13 +65,14 @@ export class ChatSession {
         if (!this.agentSession) {
             this.agentSession = new AgentSession({
                 cwd: this.workspacePath,
-                sessionId: this.agentSessionId
+                sessionId: this.agentSessionId,
+                model: nextModelId
             });
         }
 
         // 4. 发送到 Agent
         try{
-            this.agentSession.sendMessage(content);
+            this.agentSession.sendMessage(nextModelId, content);
         }catch (error){
             console.error(`ChatSession ${this.sessionId} error:`, error);
             this.broadcastError((error as Error).message);
@@ -277,7 +288,13 @@ export function getOrCreateChatSession(sessionId: string): ChatSession | null {
     }
 
     // 创建新的 ChatSession，cwd 指向 workspace 的独立目录，传入保存的 agentSessionId
-    chatSession = new ChatSession(sessionId, workspace.id, workspace.path, session.agentSessionId);
+    chatSession = new ChatSession(
+        sessionId,
+        workspace.id,
+        workspace.path,
+        session.agentSessionId,
+        session.model
+    );
     activeSessions.set(sessionId, chatSession);
 
     return chatSession;

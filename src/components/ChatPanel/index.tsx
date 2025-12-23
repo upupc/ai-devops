@@ -5,21 +5,21 @@ import {
     Input,
     Button,
     Typography,
-    Space,
     Modal,
     message,
-    Spin,
     Avatar,
     Empty,
     Select
 } from 'antd'
 import {
-    SendOutlined,
     PlusOutlined,
     DeleteOutlined,
     UserOutlined,
     RobotOutlined,
-    LoadingOutlined
+    LoadingOutlined,
+    ClockCircleOutlined,
+    ArrowUpOutlined,
+    DownOutlined
 } from '@ant-design/icons'
 import { useAppState } from '@/lib/store'
 import { Message, Session } from '@/types'
@@ -37,8 +37,10 @@ export default function ChatPanel() {
     const [newSessionName, setNewSessionName] = useState('')
     const [isCreateModalVisible, setIsCreateModalVisible] = useState(false)
     const messagesEndRef = useRef<HTMLDivElement>(null)
+    const [selectedModel, setSelectedModel] = useState('claude-sonnet-4-5-20250929')
 
     const { sessions, currentSessionId, messages, isLoading, currentWorkspace } = state
+    const [isInitializing, setIsInitializing] = useState(false)
 
     /**
      * 滚动到最新消息
@@ -172,6 +174,7 @@ export default function ChatPanel() {
                 body: JSON.stringify({
                     sessionId: currentSessionId,
                     message: inputValue,
+                    model: selectedModel,
                 }),
             })
 
@@ -295,7 +298,7 @@ export default function ChatPanel() {
                         value: session.id,
                         label: session.name,
                     }))}
-                    dropdownRender={(menu) => (
+                    popupRender={(menu) => (
                         <>
                             {menu}
                             <div style={{ padding: '8px', borderTop: '1px solid #f0f0f0' }}>
@@ -321,6 +324,7 @@ export default function ChatPanel() {
                     title="删除当前会话"
                 />
             </div>
+
 
             {/* 消息列表区域 */}
             <div className={styles.messagesContainer}>
@@ -354,7 +358,11 @@ export default function ChatPanel() {
                         ))}
                         {isLoading && (
                             <div className={styles.loadingIndicator}>
-                                <Spin indicator={<LoadingOutlined style={{ fontSize: 16 }} spin />} />
+                                <div className={styles.thinkingDots}>
+                                    <span></span>
+                                    <span></span>
+                                    <span></span>
+                                </div>
                                 <Text type="secondary" style={{ marginLeft: 8 }}>正在思考...</Text>
                             </div>
                         )}
@@ -364,24 +372,60 @@ export default function ChatPanel() {
             </div>
 
             {/* 输入区域 */}
-            <div className={styles.inputContainer}>
-                <Space.Compact style={{ width: '100%' }}>
+            <div className={styles.composerContainer}>
+                <div className={styles.composer}>
                     <TextArea
                         value={inputValue}
                         onChange={(e) => setInputValue(e.target.value)}
                         onKeyDown={handleKeyDown}
-                        placeholder={currentSessionId ? "输入消息，按 Enter 发送..." : "请先选择一个会话"}
-                        autoSize={{ minRows: 1, maxRows: 4 }}
+                        placeholder={currentSessionId ? '有什么我可以帮助你的吗？' : '请先选择一个会话'}
+                        autoSize={{ minRows: 3, maxRows: 10 }}
                         disabled={!currentSessionId || isLoading}
-                        style={{ resize: 'none' }}
+                        className={styles.composerTextarea}
                     />
-                    <Button
-                        type="primary"
-                        icon={<SendOutlined />}
-                        onClick={handleSendMessage}
-                        disabled={!currentSessionId || isLoading || !inputValue.trim()}
-                    />
-                </Space.Compact>
+                    <div className={styles.composerFooter}>
+                        <div className={styles.composerLeft}>
+                            <Button
+                                type="text"
+                                icon={<PlusOutlined />}
+                                className={styles.composerIconButton}
+                                disabled={isLoading}
+                                title="添加（敬请期待）"
+                            />
+                            <Button
+                                type="text"
+                                icon={<ClockCircleOutlined />}
+                                className={styles.composerIconButton}
+                                disabled={isLoading}
+                                title="历史（敬请期待）"
+                            />
+                        </div>
+                        <div className={styles.composerRight}>
+                            <Select
+                                value={selectedModel}
+                                onChange={setSelectedModel}
+                                options={[
+                                    { value: 'claude-haiku-4-5-20251001', label: 'Haiku 4.5' },
+                                    { value: 'claude-sonnet-4-5-20250929', label: 'Sonnet 4.5' },
+                                    { value: 'claude-opus-4-5-20251101', label: 'Opus 4.5' },
+                                ]}
+                                className={styles.modelSelect}
+                                bordered={false}
+                                suffixIcon={<DownOutlined />}
+                                disabled={isLoading}
+                                popupMatchSelectWidth={false}
+                            />
+                            <Button
+                                type="text"
+                                icon={isLoading ? <LoadingOutlined spin /> : <ArrowUpOutlined />}
+                                onClick={handleSendMessage}
+                                disabled={!currentSessionId || isLoading || !inputValue.trim()}
+                                className={styles.sendButton}
+                                aria-label="发送"
+                            />
+                        </div>
+                    </div>
+                </div>
             </div>
 
             {/* 新建会话对话框 */}

@@ -102,6 +102,7 @@ export default function FileBrowserPanel() {
     const [createPath, setCreatePath] = useState('')
     const [newName, setNewName] = useState('')
     const [selectedPath, setSelectedPath] = useState<string | null>(null)
+    const [isLoading, setIsLoading] = useState(false)
 
     /**
      * 刷新文件树
@@ -109,6 +110,7 @@ export default function FileBrowserPanel() {
     const refreshFileTree = async () => {
         if (!currentWorkspace) return
 
+        setIsLoading(true)
         try {
             const response = await fetch(`/api/files?workspaceId=${currentWorkspace.id}`)
             if (!response.ok) throw new Error('获取文件列表失败')
@@ -118,6 +120,8 @@ export default function FileBrowserPanel() {
             message.success('文件列表已刷新')
         } catch {
             message.error('刷新文件列表失败')
+        } finally {
+            setIsLoading(false)
         }
     }
 
@@ -334,7 +338,16 @@ export default function FileBrowserPanel() {
             </div>
 
             <div className={styles.treeContainer}>
-                {treeData.length === 0 || (fileTree && (!fileTree.children || fileTree.children.length === 0)) ? (
+                {isLoading ? (
+                    <div className={styles.loadingTree}>
+                        <div className={styles.loadingSpinner}>
+                            <div className={styles.pulseDot}></div>
+                            <div className={styles.pulseDot}></div>
+                            <div className={styles.pulseDot}></div>
+                        </div>
+                        <div style={{ marginTop: 12, color: '#999', fontSize: 12 }}>正在加载文件...</div>
+                    </div>
+                ) : treeData.length === 0 || (fileTree && (!fileTree.children || fileTree.children.length === 0)) ? (
                     <div className={styles.emptyTree}>
                         <Empty
                             description="工作区为空"

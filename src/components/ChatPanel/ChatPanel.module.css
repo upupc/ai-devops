@@ -112,7 +112,149 @@
     padding: 8px;
 }
 
-.inputContainer {
+.thinkingDots {
+    display: flex;
+    gap: 4px;
+}
+
+.thinkingDots span {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: #999;
+    animation: thinkingBounce 1.4s infinite ease-in-out;
+}
+
+.thinkingDots span:nth-child(1) {
+    animation-delay: -0.32s;
+}
+
+.thinkingDots span:nth-child(2) {
+    animation-delay: -0.16s;
+}
+
+.thinkingDots span:nth-child(3) {
+    animation-delay: 0;
+}
+
+@keyframes thinkingBounce {
+    0%, 80%, 100% {
+        transform: scale(0.6);
+        opacity: 0.5;
+    }
+    40% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.composerContainer {
     padding-top: 8px;
-    border-top: 1px solid #f0f0f0;
+}
+
+.composer {
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    border-radius: 24px;
+    background: #fff;
+    padding: 16px 16px 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.composer:focus-within {
+    border-color: rgba(0, 0, 0, 0.2);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.composer :global(.ant-input) {
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    padding: 0 !important;
+    resize: none !important;
+    font-size: 16px;
+    line-height: 1.6;
+}
+
+.composer :global(.ant-input::placeholder) {
+    color: rgba(0, 0, 0, 0.45);
+}
+
+.composerTextarea {
+    margin-bottom: 12px;
+}
+
+.composerFooter {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.composerLeft,
+.composerRight {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.composerIconButton {
+    width: 36px !important;
+    height: 36px !important;
+    border-radius: 12px !important;
+    padding: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    color: rgba(0, 0, 0, 0.65) !important;
+}
+
+.composerIconButton:not(:disabled):hover {
+    background: rgba(0, 0, 0, 0.04) !important;
+}
+
+.modelSelect {
+    border-radius: 12px;
+    padding: 6px 8px;
+}
+
+.modelSelect:not(:global(.ant-select-disabled)):hover {
+    background: rgba(0, 0, 0, 0.04);
+}
+
+.modelSelect :global(.ant-select-selector) {
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+}
+
+.modelSelect :global(.ant-select-selection-item) {
+    color: rgba(0, 0, 0, 0.75);
+    font-size: 14px;
+}
+
+.modelSelect :global(.ant-select-arrow) {
+    color: rgba(0, 0, 0, 0.55);
+}
+
+.sendButton {
+    width: 40px !important;
+    height: 40px !important;
+    border-radius: 12px !important;
+    padding: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: rgba(217, 119, 87, 0.45) !important;
+    color: rgba(0, 0, 0, 0.75) !important;
+}
+
+.sendButton:not(:disabled):hover {
+    background: rgba(217, 119, 87, 0.55) !important;
+}
+
+.sendButton:disabled {
+    background: rgba(0, 0, 0, 0.06) !important;
+    color: rgba(0, 0, 0, 0.35) !important;
 }

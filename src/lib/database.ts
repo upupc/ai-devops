@@ -64,6 +64,7 @@ function initializeTables(db: Database.Database): void {
             name TEXT NOT NULL,
             workspace_id TEXT NOT NULL,
             agent_session_id TEXT,
+            model TEXT,
             created_at TEXT NOT NULL,
             updated_at TEXT NOT NULL,
             FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE
@@ -90,6 +91,19 @@ function initializeTables(db: Database.Database): void {
         CREATE INDEX IF NOT EXISTS idx_sessions_updated_at ON sessions(updated_at DESC);
         CREATE INDEX IF NOT EXISTS idx_workspaces_updated_at ON workspaces(updated_at DESC);
     `);
+
+    ensureSessionModelColumn(db);
+}
+
+/**
+ * 确保 sessions 表包含 model 字段（兼容旧库）
+ */
+function ensureSessionModelColumn(db: Database.Database): void {
+    const columns = db.prepare("PRAGMA table_info(sessions)").all() as { name: string }[];
+    const hasModelColumn = columns.some((column) => column.name === "model");
+    if (!hasModelColumn) {
+        db.exec(`ALTER TABLE sessions ADD COLUMN model TEXT`);
+    }
 }
 
 /**
@@ -108,6 +122,7 @@ export interface SessionRow {
     name: string;
     workspace_id: string;
     agent_session_id: string | null;
+    model: string | null;
     created_at: string;
     updated_at: string;
 }

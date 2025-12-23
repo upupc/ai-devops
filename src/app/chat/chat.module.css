@@ -348,6 +348,49 @@
     color: #1a1a1a;
 }
 
+/* 思考中提示动画 */
+.thinkingIndicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #666;
+    font-size: 14px;
+}
+
+.thinkingDots {
+    display: inline-flex;
+    gap: 4px;
+}
+
+.thinkingDots span {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: #999;
+    animation: thinkingBounce 1.2s infinite ease-in-out;
+}
+
+.thinkingDots span:nth-child(1) {
+    animation-delay: -0.32s;
+}
+
+.thinkingDots span:nth-child(2) {
+    animation-delay: -0.16s;
+}
+
+@keyframes thinkingBounce {
+    0%, 80%, 100% {
+        transform: scale(0.6);
+        opacity: 0.5;
+    }
+    40% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* 思考中动态效果 */
+
 /* Markdown 样式 */
 .paragraph {
     margin: 0 0 12px;
@@ -410,73 +453,129 @@
 }
 
 /* 输入区域 */
-.inputContainer {
-    padding: 16px 24px 24px;
-    background: linear-gradient(to top, #fff 80%, transparent);
+.composerContainer {
+    padding: 20px 32px 28px;
+    background: linear-gradient(180deg, rgba(249, 250, 251, 0.4) 0%, rgba(255, 255, 255, 0.95) 40%, #fff 100%);
 }
 
-.inputWrapper {
-    max-width: 768px;
+.composer {
+    max-width: 960px;
     margin: 0 auto;
-    position: relative;
-    display: flex;
-    align-items: flex-end;
-    background-color: #f9fafb;
-    border: 1px solid #e5e5e5;
-    border-radius: 24px;
-    padding: 8px 8px 8px 16px;
-    transition: all 0.2s ease;
+    border: 1px solid rgba(0, 0, 0, 0.14);
+    border-radius: 22px;
+    background: #fff;
+    padding: 18px 18px 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.inputWrapper:focus-within {
-    border-color: #D97757;
-    box-shadow: 0 0 0 2px rgba(217, 119, 87, 0.1);
+.composer:focus-within {
+    border-color: rgba(0, 0, 0, 0.2);
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.1);
 }
 
-.textarea {
-    flex: 1;
-    border: none;
-    background: none;
-    resize: none;
-    font-size: 15px;
-    line-height: 1.5;
-    padding: 8px 0;
-    max-height: 200px;
+.composer :global(.ant-input) {
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    padding: 0 !important;
+    resize: none !important;
+    font-size: 18px;
+    line-height: 1.6;
     color: #1a1a1a;
-    outline: none;
 }
 
-.textarea::placeholder {
-    color: #999;
+.composer :global(.ant-input::placeholder) {
+    color: rgba(0, 0, 0, 0.5);
 }
 
-.textarea:disabled {
+.composerTextarea {
+    margin-bottom: 12px;
+}
+
+.composerFooter {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 14px;
+    gap: 12px;
+}
+
+.composerLeft,
+.composerRight {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.composerIconButton {
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 12px;
+    background: transparent;
+    color: rgba(0, 0, 0, 0.65);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.composerIconButton:hover:not(:disabled) {
+    background: rgba(0, 0, 0, 0.05);
+    color: rgba(0, 0, 0, 0.8);
+}
+
+.composerIconButton:disabled {
     cursor: not-allowed;
+    color: rgba(0, 0, 0, 0.3);
+}
+
+.modelSelect {
+    border-radius: 12px;
+    padding: 6px 8px;
+}
+
+.modelSelect:not(:global(.ant-select-disabled)):hover {
+    background: rgba(0, 0, 0, 0.04);
+}
+
+.modelSelect :global(.ant-select-selector) {
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+}
+
+.modelSelect :global(.ant-select-selection-item) {
+    color: rgba(0, 0, 0, 0.75);
+    font-size: 14px;
+}
+
+.modelSelect :global(.ant-select-arrow) {
+    color: rgba(0, 0, 0, 0.55);
 }
 
 .sendButton {
-    width: 36px;
-    height: 36px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: #e5e5e5;
-    border: none;
-    border-radius: 50%;
-    color: #999;
-    cursor: not-allowed;
-    transition: all 0.15s ease;
-    flex-shrink: 0;
+    width: 40px !important;
+    height: 40px !important;
+    border-radius: 12px !important;
+    padding: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: rgba(217, 119, 87, 0.45) !important;
+    color: rgba(0, 0, 0, 0.75) !important;
 }
 
-.sendButton.active {
-    background-color: #D97757;
-    color: #fff;
-    cursor: pointer;
+.sendButton:not(:disabled):hover {
+    background: rgba(217, 119, 87, 0.55) !important;
 }
 
-.sendButton.active:hover {
-    background-color: #c66848;
+.sendButton:disabled {
+    background: rgba(0, 0, 0, 0.06) !important;
+    color: rgba(0, 0, 0, 0.35) !important;
 }
 
 /* 免责声明 */
@@ -530,11 +629,25 @@
         padding: 0 16px;
     }
 
-    .inputContainer {
-        padding: 12px 16px 16px;
+    .composerContainer {
+        padding: 12px 16px 18px;
+    }
+
+    .composer {
+        padding: 14px 14px 10px;
+        border-radius: 18px;
     }
 
     .messageContent {
         max-width: 90%;
+    }
+
+    .composerFooter {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .composerRight {
+        justify-content: space-between;
     }
 }
