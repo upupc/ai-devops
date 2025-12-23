@@ -42,7 +42,7 @@ const queryResult = query({
     prompt: '你能搜索下深圳今天的天气吗',
     options: {
         maxTurns: 10,
-        model: "claude-opus-4-20250514",
+        model: "claude-sonnet-4-5-20250929",
         systemPrompt: defaultSystemPrompt,
         cwd: workspacePath,
         permissionMode: "bypassPermissions",

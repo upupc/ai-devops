@@ -1,7 +1,7 @@
 {
   "alwaysThinkingEnabled": true,
-  "apiKeyHelper": "echo sk-a3zg9ohp8gvmhcfjfbl1031bxqoeqvqh",
   "env": {
+    "ANTHROPIC_AUTH_TOKEN": "sk-a3zg9ohp8gvmhcfjfbl1031bxqoeqvqh",
     "ANTHROPIC_BASE_URL": "https://fc-api.keep-learn.top",
     "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
     "MCP_TIMEOUT": "60000"

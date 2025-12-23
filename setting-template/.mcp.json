@@ -6,6 +6,13 @@
       "headers": {
         "CONTEXT7_API_KEY": "ctx7sk-a1922c3a-1c58-4d85-a9dd-6a60f6b833a9"
       }
+    },
+    "brave-search": {
+      "command": "npx",
+      "args": ["-y", "@brave/brave-search-mcp-server", "--transport", "http"],
+      "env": {
+        "BRAVE_API_KEY": "BSAvxFKP7XDnyWWOJ5ceJQwmAwzwV3s"
+      }
     }
   }
 }
