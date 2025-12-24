@@ -151,9 +151,9 @@ export default function ChatPage() {
         }
     }, [currentWorkspace])
 
-    // 切换会话时加载消息
+    // 切换会话时加载消息（仅当会话存在且消息列表为空时）
     useEffect(() => {
-        if (currentSession) {
+        if (currentSession && messages.length === 0) {
             fetchMessages(currentSession.id)
         }
     }, [currentSession])
@@ -269,13 +269,15 @@ export default function ChatPage() {
         if (!inputValue.trim() || isLoading) return
 
         let activeSession = currentSession
+        let isNewSession = false
         if (!activeSession) {
             // 如果没有当前会话，先创建一个
             activeSession = await createSession()
             if (!activeSession) {
                 return
             }
-            setCurrentSession(activeSession);
+            isNewSession = true
+            setCurrentSession(activeSession)
         }
 
         const userMessage: Message = {
