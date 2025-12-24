@@ -99,7 +99,7 @@ export class AgentSession {
     private queryResult: Query | null = null;
     private lastMessageTime: number = Date.now();
     private timeoutId: NodeJS.Timeout | null = null;
-    private readonly IDLE_TIMEOUT = 30000;//15 * 60 * 1000; // 15分钟
+    private readonly IDLE_TIMEOUT = 15 * 60 * 1000; // 15分钟
     private idleTimedOut = false; // 是否因空闲超时终止
     private abortController: AbortController|null = null;
 

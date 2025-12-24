@@ -275,6 +275,7 @@ export default function ChatPage() {
             if (!activeSession) {
                 return
             }
+            setCurrentSession(activeSession);
         }
 
         const userMessage: Message = {

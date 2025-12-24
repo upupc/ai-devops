@@ -39,7 +39,7 @@ function printMessage(message: MyMessage) {
 console.log("workspacePath:"+workspacePath);
 
 const queryResult = query({
-    prompt: '/cost',
+    prompt: '/test',
     options: {
         maxTurns: 10,
         model: "claude-sonnet-4-5-20250929",
