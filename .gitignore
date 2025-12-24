@@ -34,7 +34,6 @@ coverage/
 # Claude Code
 .claude
 !setting-template/.claude
-!setting-template/.mcp.json
 
 # 工作区目录 (运行时生成)
 workspaces/
