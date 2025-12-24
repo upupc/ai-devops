@@ -7,6 +7,9 @@ import { AgentSession } from "./agent-client";
 import * as store from "./session-store";
 import type { SDKMessage } from "@anthropic-ai/claude-agent-sdk";
 import type { BroadcastMessage, Subscriber } from "./types/agent";
+import type {BetaMessage as APIAssistantMessage} from "@anthropic-ai/sdk/resources/beta/messages/messages";
+import * as crypto from "crypto";
+import {SDKAssistantMessageError} from "@anthropic-ai/claude-agent-sdk/entrypoints/agentSdkTypes";
 
 /**
  * 活跃的 ChatSession 实例缓存

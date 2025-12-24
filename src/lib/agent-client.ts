@@ -10,40 +10,6 @@ import * as path from "path";
 import {Query} from "@anthropic-ai/claude-agent-sdk/entrypoints/agentSdkTypes";
 
 /**
- * 系统提示词
- */
-const DEFAULT_SYSTEM_PROMPT = `你是一个 AI 开发助手，可以帮助用户在工作区中进行文件操作和代码开发。
-
-你有以下工具可以使用：
-1. Read - 读取文件内容
-2. Write - 创建或修改文件
-3. Edit - 编辑现有文件
-4. Bash - 执行终端命令
-5. Glob - 搜索文件
-6. Grep - 搜索文件内容
-
-使用规则：
-- 在执行任何文件操作前，先使用 Read 了解当前内容
-- 写入文件时提供完整的文件内容
-- 执行命令时只使用安全的命令
-- 用中文与用户交流
-- 对用户的问题给出清晰、有帮助的回答
-
-请帮助用户完成开发任务。`;
-
-/**
- * 默认允许的工具列表
- */
-const DEFAULT_ALLOWED_TOOLS = [
-    "Read",
-    "Write",
-    "Edit",
-    "Bash",
-    "Glob",
-    "Grep"
-];
-
-/**
  * 消息队列类
  * 实现异步迭代器接口，支持消息排队和顺序处理
  */
@@ -126,17 +92,82 @@ class MessageQueue {
  * 封装与 Claude Agent 的所有交互
  */
 export class AgentSession {
+    private options: AgentSessionOptions | undefined;
     private queue = new MessageQueue();
     private outputIterator: AsyncIterator<SDKMessage> | null = null;
     private sessionId: string | null = null;
     private queryResult: Query | null = null;
+    private lastMessageTime: number = Date.now();
+    private timeoutId: NodeJS.Timeout | null = null;
+    private readonly IDLE_TIMEOUT = 30000;//15 * 60 * 1000; // 15分钟
+    private idleTimedOut = false; // 是否因空闲超时终止
+    private abortController: AbortController|null = null;
 
     constructor(options?: AgentSessionOptions) {
+        this.options = options;
+        this.init(options);
+    }
+
+    private init(options?: AgentSessionOptions) {
+        this.abortController = new AbortController();
+        this.queryResult = this.createQuery(options);
+        this.outputIterator = this.queryResult[Symbol.asyncIterator]();
+        this.idleTimedOut = false;
+        this.resetIdleTimer();
+    }
+
+    /**
+     * 重置空闲计时器
+     */
+    private resetIdleTimer(): void {
+        this.lastMessageTime = Date.now();
+
+        if (this.timeoutId) {
+            clearTimeout(this.timeoutId);
+        }
+
+        this.timeoutId = setTimeout(async () => {
+            await this.handleIdleTimeout();
+        }, this.IDLE_TIMEOUT);
+    }
+
+    /**
+     * 处理空闲超时
+     */
+    private async handleIdleTimeout(): Promise<void> {
+        if (this.queryResult) {
+            this.idleTimedOut = true;
+            await this.queryResult.interrupt();
+            if(!this.abortController?.signal.aborted){
+                this.abortController?.abort('idle timeout');
+            }
+            this.outputIterator?.return?.();
+            this.abortController = null;
+            this.queryResult = null;
+            this.outputIterator = null;
+        }
+    }
+
+    /**
+     * 重新创建 query
+     */
+    private recreateQuery(options?: AgentSessionOptions): void {
+        // 清理旧的 AbortController
+        if (this.timeoutId) {
+            clearTimeout(this.timeoutId);
+            this.timeoutId = null;
+        }
+
+        // 创建新的 query
+        this.init(options);
+    }
+
+    createQuery(options?: AgentSessionOptions) {
         // 使用 Streaming Input 模式启动 query
         // 将消息队列作为 AsyncIterable 传入
 
         // 读取工作空间目录下的 SYSTEM.md 作为系统提示词
-        let systemPrompt: { type: 'preset'; preset: 'claude_code' } | string = {
+        let systemPrompt: { type: "preset"; preset: "claude_code"; append?: string|undefined } | string = {
             type: 'preset',
             preset: 'claude_code'
         };
@@ -147,7 +178,7 @@ export class AgentSession {
                 if (fs.existsSync(systemMdPath)) {
                     const content = fs.readFileSync(systemMdPath, "utf-8").trim();
                     if (content) {
-                        systemPrompt = content;
+                        systemPrompt.append = content;
                     }
                 }
             } catch (error) {
@@ -155,11 +186,10 @@ export class AgentSession {
                 console.error("Failed to read SYSTEM.md:", error);
             }
         }
-
         // 优先使用传入的model参数，否则使用默认值
         const model = options?.model || "claude-sonnet-4-5-20250929";
 
-        const queryResult = query({
+        return query({
             prompt: this.queue as AsyncIterable<SDKUserMessage>,
             options: {
                 maxTurns: options?.maxTurns ?? 100,
@@ -167,19 +197,17 @@ export class AgentSession {
                 systemPrompt: systemPrompt,
                 cwd: options?.cwd,
                 permissionMode: "bypassPermissions",
-                allowDangerouslySkipPermissions:true,
+                allowDangerouslySkipPermissions: true,
                 tools: {
                     type: "preset",
                     preset: "claude_code",
                 },
                 settingSources: ["project"],
                 resume: options?.sessionId as any,
-                stderr: data => console.log(data),
+                stderr: data => console.log('claude-agent-sdk:%s',data),
+                abortController: this.abortController as any
             }
         });
-
-        this.queryResult = queryResult;
-        this.outputIterator = queryResult[Symbol.asyncIterator]();
     }
 
     /**
@@ -189,9 +217,20 @@ export class AgentSession {
         if (this.queue.isClosed()) {
             throw new Error("Session is closed");
         }
-        if(model){
+
+        // 检查当前 query 是否已取消
+        if (this.idleTimedOut) {
+            console.log("检测到 query 已取消，重新创建 query");
+            this.recreateQuery({model:model,...this.options});
+        } else if (model) {
+            // 只有在 query 未取消时才尝试设置模型
             this.queryResult?.setModel(model);
         }
+
+        // 重置空闲计时器
+        this.resetIdleTimer();
+
+        // 推送消息到队列
         this.queue.push(content);
     }
 
@@ -205,15 +244,19 @@ export class AgentSession {
         }
 
         while (true) {
-            const { value, done } = await this.outputIterator.next();
-            if (done) break;
+            try {
+                const { value, done } = await this.outputIterator.next();
+                if (done) break;
+                // 保存 session_id
+                if (value.session_id && !this.sessionId) {
+                    this.sessionId = value.session_id;
+                }
 
-            // 保存 session_id
-            if (value.session_id && !this.sessionId) {
-                this.sessionId = value.session_id;
+                yield value;
+            } catch (error) {
+                console.warn("Claude Query is aborted by idle timeout:%s",this.sessionId,error);
+                return;
             }
-
-            yield value;
         }
     }
 
@@ -229,5 +272,9 @@ export class AgentSession {
      */
     close(): void {
         this.queue.close();
+    }
+
+    isIdleTimedOut(): boolean {
+        return this.idleTimedOut;
     }
 }
