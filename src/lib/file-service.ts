@@ -204,3 +204,65 @@ export async function deleteFile(
         return false
     }
 }
+
+/**
+ * 上传单个文件
+ */
+export async function uploadFile(
+    workspaceId: string,
+    targetPath: string,
+    fileName: string,
+    fileContent: Buffer
+): Promise<boolean> {
+    const workspace = getWorkspace(workspaceId)
+    if (!workspace) return false
+
+    const relativePath = targetPath ? `${targetPath}/${fileName}` : fileName
+    if (!validatePath(workspace.path, relativePath)) {
+        throw new Error('访问被拒绝: 路径超出工作区范围')
+    }
+
+    if (isSensitiveFile(relativePath)) {
+        throw new Error('访问被拒绝: 无法上传敏感文件')
+    }
+
+    const absolutePath = path.join(workspace.path, relativePath)
+
+    // 创建父目录
+    const parentDir = path.dirname(absolutePath)
+    await fs.mkdir(parentDir, { recursive: true })
+
+    await fs.writeFile(absolutePath, fileContent)
+    return true
+}
+
+/**
+ * 上传文件结构（支持文件夹）
+ */
+export async function uploadFiles(
+    workspaceId: string,
+    targetPath: string,
+    files: Array<{ path: string; name: string; content: Buffer }>
+): Promise<{ success: number; failed: number }> {
+    let success = 0
+    let failed = 0
+
+    for (const file of files) {
+        const relativePath = targetPath
+            ? `${targetPath}/${file.path}`
+            : file.path
+
+        try {
+            const result = await uploadFile(workspaceId, path.dirname(relativePath), path.basename(relativePath), file.content)
+            if (result) {
+                success++
+            } else {
+                failed++
+            }
+        } catch {
+            failed++
+        }
+    }
+
+    return { success, failed }
+}

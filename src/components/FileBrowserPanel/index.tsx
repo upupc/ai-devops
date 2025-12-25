@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useRef } from 'react'
 import {
     Tree,
     Empty,
@@ -21,7 +21,8 @@ import {
     ReloadOutlined,
     PlusOutlined,
     DeleteOutlined,
-    EditOutlined
+    EditOutlined,
+    UploadOutlined
 } from '@ant-design/icons'
 import type { DataNode, TreeProps } from 'antd/es/tree'
 import { useAppState } from '@/lib/store'
@@ -103,6 +104,11 @@ export default function FileBrowserPanel() {
     const [newName, setNewName] = useState('')
     const [selectedPath, setSelectedPath] = useState<string | null>(null)
     const [isLoading, setIsLoading] = useState(false)
+    const [isUploading, setIsUploading] = useState(false)
+
+    // 文件上传 input ref
+    const fileInputRef = useRef<HTMLInputElement>(null)
+    const folderInputRef = useRef<HTMLInputElement>(null)
 
     /**
      * 刷新文件树
@@ -212,6 +218,105 @@ export default function FileBrowserPanel() {
                 }
             },
         })
+    }
+
+    /**
+     * 触发文件上传
+     */
+    const triggerFileUpload = () => {
+        fileInputRef.current?.click()
+    }
+
+    /**
+     * 触发文件夹上传
+     */
+    const triggerFolderUpload = () => {
+        folderInputRef.current?.click()
+    }
+
+    /**
+     * 处理文件选择和上传
+     */
+    const handleFileUpload = async (files: FileList | null, isFolder: boolean) => {
+        if (!currentWorkspace || !files || files.length === 0) return
+
+        setIsUploading(true)
+        try {
+            const formData = new FormData()
+            formData.append('workspaceId', currentWorkspace.id)
+
+            // 如果选中了目录，使用选中目录作为目标路径
+            const targetDir = selectedPath && selectedPath !== ROOT_KEY ? keyToPath(selectedPath) : ''
+            formData.append('targetPath', targetDir)
+
+            // 获取选中的节点是否是目录
+            const isTargetDirectory = selectedPath
+                ? treeData
+                      .flatMap(node => getAllNodes(node))
+                      .find(n => n.key === selectedPath)?.isLeaf === false
+                : true
+
+            if (!isTargetDirectory && selectedPath) {
+                message.warning('请选择目录作为上传目标')
+                setIsUploading(false)
+                return
+            }
+
+            if (isFolder) {
+                // 文件夹上传：webkitRelativePath 包含相对路径
+                for (let i = 0; i < files.length; i++) {
+                    const file = files[i]
+                    const relativePath = (file as any).webkitRelativePath || file.name
+                    formData.append(`files[${relativePath}]`, file)
+                }
+            } else {
+                // 单个文件上传
+                for (let i = 0; i < files.length; i++) {
+                    formData.append('file', files[i])
+                }
+            }
+
+            const response = await fetch('/api/files/upload', {
+                method: 'POST',
+                body: formData,
+            })
+
+            if (!response.ok) {
+                const error = await response.json()
+                throw new Error(error.error || '上传失败')
+            }
+
+            const data = await response.json()
+
+            await refreshFileTree()
+
+            if (data.failed > 0) {
+                message.warning(`上传完成：成功 ${data.uploaded} 个，失败 ${data.failed} 个`)
+            } else {
+                message.success(`成功上传 ${data.uploaded} 个文件`)
+            }
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : '上传失败'
+            message.error(errorMessage)
+        } finally {
+            setIsUploading(false)
+            // 清空 input 以便重复上传相同文件
+            if (fileInputRef.current) fileInputRef.current.value = ''
+            if (folderInputRef.current) folderInputRef.current.value = ''
+        }
+    }
+
+    /**
+     * 获取树中所有节点的辅助函数
+     */
+    const getAllNodes = (node: DataNode): DataNode[] => {
+        const nodes: DataNode[] = [node]
+        if (node.children) {
+            for (const child of node.children) {
+                nodes.push(...getAllNodes(child))
+            }
+        }
+        return nodes
     }
 
     /**
@@ -330,9 +435,26 @@ export default function FileBrowserPanel() {
                     <Button
                         type="text"
                         size="small"
+                        icon={<UploadOutlined />}
+                        onClick={triggerFileUpload}
+                        disabled={isUploading}
+                        title="上传文件"
+                    />
+                    <Button
+                        type="text"
+                        size="small"
+                        icon={<FolderOutlined />}
+                        onClick={triggerFolderUpload}
+                        disabled={isUploading}
+                        title="上传文件夹"
+                    />
+                    <Button
+                        type="text"
+                        size="small"
                         icon={<ReloadOutlined />}
                         onClick={refreshFileTree}
                         title="刷新"
+                        loading={isUploading}
                     />
                 </div>
             </div>
@@ -416,6 +538,25 @@ export default function FileBrowserPanel() {
                     </Text>
                 )}
             </Modal>
+
+            {/* 隐藏的文件上传 input */}
+            <input
+                ref={fileInputRef}
+                type="file"
+                style={{ display: 'none' }}
+                multiple
+                onChange={(e) => handleFileUpload(e.target.files, false)}
+            />
+
+            {/* 隐藏的文件夹上传 input */}
+            <input
+                ref={folderInputRef}
+                type="file"
+                style={{ display: 'none' }}
+                {...({ webkitdirectory: '' } as React.InputHTMLAttributes<HTMLInputElement>)}
+                multiple
+                onChange={(e) => handleFileUpload(e.target.files, true)}
+            />
         </div>
     )
 }

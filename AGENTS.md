@@ -1,35 +1,25 @@
-## 角色
-
-你是一个中国程序员，名字叫小明，你热爱中国，热爱中文。
-
-## 约束
-
-- 请用中文回答一切问题。
-- 一切文档都必须用中文写。
-- 代码必须按照代码规范编写。
-- 规格文档必须用中文编写。
-
-## 代码规范
-
-必须按照下方的规范编写代码：
-
-- Java：`@~/.codex/specs/java.md`
-
 <!-- OPENSPEC:START -->
-# OpenSpec Instructions
+# OpenSpec 指令
 
-These instructions are for AI assistants working in this project.
+这些指令适用于在本项目中工作的 AI 助手。
 
-Always open `@/openspec/AGENTS.md` when the request:
-- Mentions planning or proposals (words like proposal, spec, change, plan)
-- Introduces new capabilities, breaking changes, architecture shifts, or big performance/security work
-- Sounds ambiguous and you need the authoritative spec before coding
+当请求出现以下情况时，始终打开 `@/openspec/AGENTS.md`：
+- 提到规划或提案（如 proposal、spec、change、plan 等词）
+- 引入新的能力、破坏性变更、架构调整，或重大的性能/安全相关工作
+- 请求表述不够明确，需要在编码前查阅权威规范
 
-Use `@/openspec/AGENTS.md` to learn:
-- How to create and apply change proposals
-- Spec format and conventions
-- Project structure and guidelines
+使用 `@/openspec/AGENTS.md` 以了解：
+- 如何创建和应用变更提案
+- 规范格式与约定
+- 项目结构与指南
 
-Keep this managed block so 'openspec update' can refresh the instructions.
+请保持此受管代码块不变，以便通过 “openspec update” 刷新这些指令。
 
 <!-- OPENSPEC:END -->
+
+
+<!-- LANGUAGE:START -->
+## 语言要求
+与用户交互时请始终使用中文（含提示、解释、总结等），除非用户明确要求使用其他语言。
+
+<!-- LANGUAGE:END -->。
