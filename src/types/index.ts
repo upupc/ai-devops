@@ -7,6 +7,16 @@ export interface Workspace {
     name: string
     /** 工作区独立目录路径，作为 claude agent 的工作根目录 */
     path: string
+    /** Git 用户名 */
+    username?: string
+    /** Git 令牌 */
+    gitToken?: string
+    /** Git 仓库地址 */
+    gitRepo?: string
+    /** LLM API 令牌 */
+    llmApiToken?: string
+    /** LLM 基础 URL */
+    llmBaseUrl?: string
     createdAt: Date
     updatedAt: Date
 }

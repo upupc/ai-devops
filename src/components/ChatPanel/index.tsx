@@ -23,7 +23,7 @@ import {
 } from '@ant-design/icons'
 import { useAppState } from '@/lib/store'
 import { apiFetch } from '@/lib/api'
-import { Message, Session } from '@/types'
+import { Message, Session, Workspace } from '@/types'
 import styles from './ChatPanel.module.css'
 
 const { TextArea } = Input
@@ -144,6 +144,94 @@ export default function ChatPanel() {
                 }
             },
         })
+    }
+
+    /**
+     * 发送指定内容的消息
+     */
+    const sendMessageWithContent = async (content: string) => {
+        if (!content.trim()) return
+        if (!currentSessionId) {
+            message.warning('请先创建或选择一个会话')
+            return
+        }
+
+        const userMessage: Message = {
+            id: `msg_${Date.now()}`,
+            sessionId: currentSessionId,
+            role: 'user',
+            content: content,
+            createdAt: new Date(),
+        }
+
+        dispatch({ type: 'ADD_MESSAGE', payload: userMessage })
+        dispatch({ type: 'SET_LOADING', payload: true })
+
+        try {
+            const response = await apiFetch('/api/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    sessionId: currentSessionId,
+                    message: content,
+                    model: selectedModel,
+                }),
+            })
+
+            if (!response.ok) throw new Error('发送消息失败')
+
+            // 处理流式响应
+            const reader = response.body?.getReader()
+            if (!reader) throw new Error('无法读取响应')
+
+            const assistantMessage: Message = {
+                id: `msg_${Date.now()}_assistant`,
+                sessionId: currentSessionId,
+                role: 'assistant',
+                content: '',
+                createdAt: new Date(),
+            }
+            dispatch({ type: 'ADD_MESSAGE', payload: assistantMessage })
+
+            const decoder = new TextDecoder()
+            let buffer = ''
+
+            while (true) {
+                const { done, value } = await reader.read()
+                if (done) break
+
+                buffer += decoder.decode(value, { stream: true })
+                const lines = buffer.split('\n')
+                buffer = lines.pop() || ''
+
+                lines.forEach(line => {
+                    if (line.startsWith('data: ')) {
+                        const data = line.slice(6)
+                        if (data === '[DONE]') return
+
+                        try {
+                            const parsed = JSON.parse(data)
+                            if (parsed.content) {
+                                dispatch({
+                                    type: 'UPDATE_MESSAGE',
+                                    payload: { id: assistantMessage.id, content: parsed.content },
+                                })
+                            }
+                            if (parsed.fileChanged) {
+                                // 刷新文件树
+                                refreshFileTree()
+                            }
+                        } catch {
+                            // 忽略解析错误
+                        }
+                    }
+                })
+            }
+        } catch {
+            message.error('发送消息失败')
+        } finally {
+            dispatch({ type: 'SET_LOADING', payload: false })
+        }
     }
 
     /**
@@ -286,6 +374,25 @@ export default function ChatPanel() {
         )
     }
 
+    /**
+     * 构造包含验证信息的 Git 仓库 URL
+     */
+    const constructAuthUrl = (currentWorkspace: Workspace): string => {
+        if (!currentWorkspace.username || !currentWorkspace.gitToken || !currentWorkspace.gitRepo) {
+            return ''
+        }
+
+        // 从 gitRepo 中提取协议和域名
+        const repoUrl = currentWorkspace.gitRepo
+        const protocolMatch = repoUrl.match(/^(https?):\/\//)
+        const protocol = protocolMatch ? protocolMatch[1] : 'http'
+
+        // 移除协议部分，只保留域名和路径
+        const urlWithoutProtocol = repoUrl.replace(/^https?:\/\//, '')
+
+        return `${protocol}://${currentWorkspace.username}:${currentWorkspace.gitToken}@${urlWithoutProtocol}`
+    }
+
     return (
         <div className={styles.container}>
             {/* 会话选择区域 */}
@@ -374,6 +481,26 @@ export default function ChatPanel() {
 
             {/* 输入区域 */}
             <div className={styles.composerContainer}>
+                {/* 快捷工具栏 */}
+                <div className={styles.quickToolbar}>
+                    <Button
+                        type="text"
+                        disabled={isLoading}
+                        onClick={async () => {
+                            if (!currentWorkspace) {
+                                message.warning('请先选择一个工作区')
+                                return
+                            }
+
+                            const initMessage = `/init-workspace --path ${currentWorkspace.path} --git-repo ${constructAuthUrl(currentWorkspace)}`
+
+                            // 直接发送消息，不更新输入框
+                            await sendMessageWithContent(initMessage)
+                        }}
+                    >
+                        初始化空间
+                    </Button>
+                </div>
                 <div className={styles.composer}>
                     <TextArea
                         value={inputValue}
@@ -411,7 +538,7 @@ export default function ChatPanel() {
                                     { value: 'claude-opus-4-5-20251101', label: 'Opus 4.5' },
                                 ]}
                                 className={styles.modelSelect}
-                                bordered={false}
+                                variant="borderless"
                                 suffixIcon={<DownOutlined />}
                                 disabled={isLoading}
                                 popupMatchSelectWidth={false}

@@ -52,6 +52,11 @@ function initializeTables(db: Database.Database): void {
             id TEXT PRIMARY KEY,
             name TEXT NOT NULL,
             path TEXT NOT NULL UNIQUE,
+            username TEXT,
+            git_token TEXT,
+            git_repo TEXT,
+            llm_api_token TEXT,
+            llm_base_url TEXT,
             created_at TEXT NOT NULL,
             updated_at TEXT NOT NULL
         )
@@ -93,6 +98,7 @@ function initializeTables(db: Database.Database): void {
     `);
 
     ensureSessionModelColumn(db);
+    ensureWorkspaceGitColumns(db);
 }
 
 /**
@@ -107,12 +113,61 @@ function ensureSessionModelColumn(db: Database.Database): void {
 }
 
 /**
+ * 确保 workspaces 表包含 git 相关字段（兼容旧库）
+ */
+function ensureWorkspaceGitColumns(db: Database.Database): void {
+    const columns = db.prepare("PRAGMA table_info(workspaces)").all() as { name: string }[];
+    const columnsMap = new Map(columns.map((c) => [c.name, true]));
+
+    // 如果所有列都已存在，说明是新创建的表，无需迁移
+    const hasAllColumns = columnsMap.has("username") &&
+                         columnsMap.has("git_token") &&
+                         columnsMap.has("git_repo") &&
+                         columnsMap.has("llm_api_token") &&
+                         columnsMap.has("llm_base_url");
+
+    if (hasAllColumns) {
+        return;
+    }
+
+    // 添加缺失的列
+    if (!columnsMap.has("username")) {
+        db.exec(`ALTER TABLE workspaces ADD COLUMN username TEXT`);
+    }
+
+    // 处理 private_token -> git_token 迁移
+    if (columnsMap.has("private_token") && !columnsMap.has("git_token")) {
+        // 重命名 private_token 为 git_token
+        db.exec(`ALTER TABLE workspaces RENAME COLUMN private_token TO git_token`);
+    } else if (!columnsMap.has("git_token")) {
+        db.exec(`ALTER TABLE workspaces ADD COLUMN git_token TEXT`);
+    }
+
+    if (!columnsMap.has("git_repo")) {
+        db.exec(`ALTER TABLE workspaces ADD COLUMN git_repo TEXT`);
+    }
+
+    // 添加新的 LLM 相关字段
+    if (!columnsMap.has("llm_api_token")) {
+        db.exec(`ALTER TABLE workspaces ADD COLUMN llm_api_token TEXT`);
+    }
+    if (!columnsMap.has("llm_base_url")) {
+        db.exec(`ALTER TABLE workspaces ADD COLUMN llm_base_url TEXT`);
+    }
+}
+
+/**
  * 数据库行类型定义
  */
 export interface WorkspaceRow {
     id: string;
     name: string;
     path: string;
+    username: string | null;
+    git_token: string | null;
+    git_repo: string | null;
+    llm_api_token: string | null;
+    llm_base_url: string | null;
     created_at: string;
     updated_at: string;
 }

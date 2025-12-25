@@ -25,6 +25,11 @@ interface Workspace {
     id: string
     name: string
     path: string
+    username?: string
+    gitToken?: string
+    gitRepo?: string
+    llmApiToken?: string
+    llmBaseUrl?: string
     createdAt: string
     updatedAt: string
 }
@@ -118,10 +123,6 @@ function MarkdownContent({ content }: { content: string }) {
     )
 }
 
-// 默认工作区配置
-const DEFAULT_WORKSPACE_ID = 'default_chat'
-const DEFAULT_WORKSPACE_NAME = 'Claude Chat'
-
 // Chat 页面内容组件（使用 useSearchParams）
 function ChatContent() {
     const searchParams = useSearchParams()
@@ -145,11 +146,6 @@ function ChatContent() {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
     }, [])
 
-    // 初始化默认工作区
-    useEffect(() => {
-        initDefaultWorkspace()
-    }, [])
-
     // 切换工作区时加载会话列表
     useEffect(() => {
         if (currentWorkspace) {
@@ -171,30 +167,31 @@ function ChatContent() {
         scrollToBottom()
     }, [messages, scrollToBottom])
 
-    // 初始化默认工作区
-    const initDefaultWorkspace = async () => {
+    // 初始化工作区
+    useEffect(() => {
+        initWorkspace()
+    }, [])
+
+    // 初始化工作区
+    const initWorkspace = async () => {
         try {
             setIsInitializing(true)
-            // 如果 URL 中指定了 workspaceId，使用该 ID，否则使用默认的
-            const targetWorkspaceId = workspaceIdFromUrl || DEFAULT_WORKSPACE_ID
-            const response = await apiFetch('/api/workspaces/init', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    id: targetWorkspaceId,
-                    name: workspaceIdFromUrl ? undefined : DEFAULT_WORKSPACE_NAME,
-                }),
-            })
-
-            if (response.ok) {
-                const workspace = await response.json()
-                setCurrentWorkspace(workspace)
+            // 如果 URL 中指定了 workspaceId，使用该 ID 获取工作区
+            if (workspaceIdFromUrl) {
+                const response = await apiFetch(`/api/workspaces/${workspaceIdFromUrl}`)
+                if (response.ok) {
+                    const data = await response.json()
+                    setCurrentWorkspace(data.workspace)
+                } else {
+                    antMessage.error('工作区不存在，请检查链接或选择其他工作区')
+                }
             } else {
-                antMessage.error('初始化工作区失败')
+                // 没有指定工作区，提示用户选择
+                setCurrentWorkspace(null)
             }
         } catch (error) {
             console.error('Failed to init workspace:', error)
-            antMessage.error('初始化工作区失败')
+            antMessage.error('加载工作区失败')
         } finally {
             setIsInitializing(false)
         }
@@ -398,6 +395,31 @@ function ChatContent() {
                 <div className={styles.loadingContainer}>
                     <Spin size="large" />
                     <p>正在初始化...</p>
+                </div>
+            </div>
+        )
+    }
+
+    // 没有工作区时的提示
+    if (!currentWorkspace) {
+        return (
+            <div className={styles.container}>
+                <div className={styles.loadingContainer}>
+                    <ClaudeLogo size={64} />
+                    <h2>请先选择或创建工作区</h2>
+                    <p>您需要先创建一个工作区或从工作区选择页面进入。</p>
+                    <div style={{ marginTop: 24, display: 'flex', gap: 12 }}>
+                        <Link href="/agent">
+                            <Button type="primary" size="large">
+                                选择工作区
+                            </Button>
+                        </Link>
+                        <Link href="/agent">
+                            <Button size="large">
+                                创建工作区
+                            </Button>
+                        </Link>
+                    </div>
                 </div>
             </div>
         )

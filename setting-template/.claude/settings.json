@@ -1,27 +1,7 @@
 {
   "alwaysThinkingEnabled": true,
   "env": {
-    "ANTHROPIC_AUTH_TOKEN": "sk-a3zg9ohp8gvmhcfjfbl1031bxqoeqvqh",
-    "ANTHROPIC_BASE_URL": "https://fc-api.keep-learn.top",
     "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
     "MCP_TIMEOUT": "60000"
-  },
-  "feedbackSurveyState": {
-    "lastShownTime": 1754405290921
-  },
-  "model": "opus",
-  "permissions": {
-    "allow": [
-      "Bash(npm run lint)",
-      "Bash(npm run test:*)",
-      "Base(curl:*)",
-      "Read(~/.zshrc)"
-    ],
-    "deny": []
-  },
-  "statusLine": {
-    "command": "./statusline.sh",
-    "padding": 0,
-    "type": "command"
   }
 }

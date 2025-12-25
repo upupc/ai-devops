@@ -5,12 +5,17 @@ import {
 import * as fs from "fs";
 import * as path from "path";
 
-const WORKSPACES_ROOT = path.join(process.cwd(), "workspaces");
+const WORKSPACES_ROOT = process.env.WORKSPACES_ROOT
+    ? path.resolve(process.env.WORKSPACES_ROOT)
+    : path.join(process.cwd(), "workspaces");
 const workspacePath = path.join(WORKSPACES_ROOT, "default_chat");
 const systemMdPath = path.join(workspacePath, "SYSTEM.md");
-const content = fs.readFileSync(systemMdPath, "utf-8").trim();
-const systemPrompt = content;
-const defaultSystemPrompt:{ type: 'preset'; preset: 'claude_code' } | string = {type: 'preset', preset: 'claude_code'};
+let systemContent = '';
+if (fs.existsSync(systemMdPath)) {
+    systemContent = fs.readFileSync(systemMdPath, "utf-8").trim();
+}
+const defaultSystemPrompt:{ type: 'preset'; preset: 'claude_code',append?: string; } | string = {
+    type: 'preset', preset: 'claude_code', append:systemContent};
 
 type MyMessage = {
     type:string,
@@ -38,8 +43,11 @@ function printMessage(message: MyMessage) {
 
 console.log("workspacePath:"+workspacePath);
 
+const prompt = `/init-workspace --path ${workspacePath} --git-repo http://huanggu.ly:q3nNoM1t6JsgRCdkCZLF@gitlab.alibaba-inc.com/onetouch-tech/onetouch-ames-base.git`;
+
+
 const queryResult = query({
-    prompt: '/test',
+    prompt: prompt,
     options: {
         maxTurns: 10,
         model: "claude-sonnet-4-5-20250929",
@@ -53,7 +61,7 @@ const queryResult = query({
         },
         settingSources: ["project"],
         // resume: '3cb258e4-1385-4bc4-bef7-459a7a3238cf',
-        stderr: data => console.log('sdk:' + data),
+        stderr: data => console.log('sdk:' + data)
     }
 });
 

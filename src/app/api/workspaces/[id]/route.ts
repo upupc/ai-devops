@@ -38,9 +38,14 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     try {
         const { id } = await params
         const body = await request.json()
-        const { name } = body
+        const { name, username, gitToken, gitRepo } = body
 
-        const workspace = updateWorkspace(id, { name })
+        const workspace = updateWorkspace(id, {
+            name,
+            username,
+            gitToken,
+            gitRepo
+        })
 
         if (!workspace) {
             return NextResponse.json(

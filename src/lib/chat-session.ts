@@ -69,7 +69,7 @@ export class ChatSession {
             this.agentSession = new AgentSession({
                 cwd: this.workspacePath,
                 sessionId: this.agentSessionId,
-                model: nextModelId
+                model: nextModelId,
             });
         }
 
