@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import {
     Card,
     List,
@@ -19,7 +20,8 @@ import {
     FolderOutlined,
     DeleteOutlined,
     MoreOutlined,
-    ArrowRightOutlined
+    ArrowRightOutlined,
+    CommentOutlined
 } from '@ant-design/icons'
 import { useAppState } from '@/lib/store'
 import { apiFetch } from '@/lib/api'
@@ -33,6 +35,7 @@ const { Title, Text } = Typography
  * 用于选择或创建工作区
  */
 export default function WorkspaceSelector() {
+    const router = useRouter()
     const { state, dispatch } = useAppState()
     const [isCreateModalVisible, setIsCreateModalVisible] = useState(false)
     const [newWorkspaceName, setNewWorkspaceName] = useState('')
@@ -241,6 +244,17 @@ export default function WorkspaceSelector() {
                                 hoverable
                                 onClick={() => handleSelectWorkspace(workspace)}
                                 actions={[
+                                    <Button
+                                        key="chat"
+                                        type="link"
+                                        icon={<CommentOutlined />}
+                                        onClick={(e) => {
+                                            e.stopPropagation()
+                                            router.push(`/chat?workspaceId=${workspace.id}`)
+                                        }}
+                                    >
+                                        Chat
+                                    </Button>,
                                     <Button
                                         key="enter"
                                         type="link"

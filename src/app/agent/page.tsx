@@ -4,7 +4,7 @@ import { Layout, Typography, Button, Space, Spin } from 'antd'
 import { RobotOutlined, ArrowLeftOutlined, FolderOutlined, LoadingOutlined, MessageOutlined } from '@ant-design/icons'
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
-import { useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { apiFetch } from '@/lib/api'
 import ChatPanel from '@/components/ChatPanel'
 import WorkspacePanel from '@/components/WorkspacePanel'
@@ -18,6 +18,7 @@ const { Header } = Layout
  * 主页面内容组件
  */
 function MainContent() {
+    const router = useRouter()
     const searchParams = useSearchParams()
     const workspaceIdFromUrl = searchParams.get('workspaceId')
     const { state, dispatch } = useAppState()
@@ -102,6 +103,7 @@ function MainContent() {
     const handleBackToWorkspaces = () => {
         dispatch({ type: 'SET_CURRENT_WORKSPACE', payload: null })
         dispatch({ type: 'RESET_SESSION_STATE' })
+        router.push('/agent')
     }
 
     /**
