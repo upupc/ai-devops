@@ -5,6 +5,7 @@ import { Tabs, Empty, message, Button, Spin } from 'antd'
 import { CloseOutlined, SaveOutlined } from '@ant-design/icons'
 import dynamic from 'next/dynamic'
 import { useAppState } from '@/lib/store'
+import { apiFetch } from '@/lib/api'
 import styles from './WorkspacePanel.module.css'
 
 // 动态导入 Monaco Editor 以避免 SSR 问题
@@ -73,7 +74,7 @@ export default function WorkspacePanel() {
         try {
             // 对路径的每个段分别编码，保留斜杠
             const encodedPath = filePath.split('/').map(segment => encodeURIComponent(segment)).join('/')
-            const response = await fetch(`/api/files/${encodedPath}`, {
+            const response = await apiFetch(`/api/files/${encodedPath}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

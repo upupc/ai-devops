@@ -8,9 +8,13 @@ import {
     LoadingOutlined,
     ClockCircleOutlined,
     ArrowUpOutlined,
-    DownOutlined
+    DownOutlined,
+    AppstoreOutlined
 } from '@ant-design/icons'
 import { message as antMessage, Popconfirm, Spin, Input, Button, Select } from 'antd'
+import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
+import { apiFetch } from '@/lib/api'
 import ReactMarkdown from 'react-markdown'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
@@ -119,6 +123,9 @@ const DEFAULT_WORKSPACE_ID = 'default_chat'
 const DEFAULT_WORKSPACE_NAME = 'Claude Chat'
 
 export default function ChatPage() {
+    const searchParams = useSearchParams()
+    const workspaceIdFromUrl = searchParams.get('workspaceId')
+
     // 状态管理
     const [currentWorkspace, setCurrentWorkspace] = useState<Workspace | null>(null)
     const [sessions, setSessions] = useState<Session[]>([])
@@ -167,12 +174,14 @@ export default function ChatPage() {
     const initDefaultWorkspace = async () => {
         try {
             setIsInitializing(true)
-            const response = await fetch('/api/workspaces/init', {
+            // 如果 URL 中指定了 workspaceId，使用该 ID，否则使用默认的
+            const targetWorkspaceId = workspaceIdFromUrl || DEFAULT_WORKSPACE_ID
+            const response = await apiFetch('/api/workspaces/init', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    id: DEFAULT_WORKSPACE_ID,
-                    name: DEFAULT_WORKSPACE_NAME,
+                    id: targetWorkspaceId,
+                    name: workspaceIdFromUrl ? undefined : DEFAULT_WORKSPACE_NAME,
                 }),
             })
 
@@ -192,7 +201,7 @@ export default function ChatPage() {
 
     const fetchSessions = async (workspaceId: string) => {
         try {
-            const response = await fetch(`/api/workspaces/${workspaceId}/sessions`)
+            const response = await apiFetch(`/api/workspaces/${workspaceId}/sessions`)
             if (response.ok) {
                 const data = await response.json()
                 setSessions(data.sessions || [])
@@ -204,7 +213,7 @@ export default function ChatPage() {
 
     const fetchMessages = async (sessionId: string) => {
         try {
-            const response = await fetch(`/api/sessions/${sessionId}/messages`)
+            const response = await apiFetch(`/api/sessions/${sessionId}/messages`)
             if (response.ok) {
                 const data = await response.json()
                 setMessages(data.messages || [])
@@ -221,7 +230,7 @@ export default function ChatPage() {
         }
 
         try {
-            const response = await fetch('/api/sessions', {
+            const response = await apiFetch('/api/sessions', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -246,7 +255,7 @@ export default function ChatPage() {
 
     const deleteSession = async (sessionId: string) => {
         try {
-            const response = await fetch(`/api/sessions/${sessionId}`, {
+            const response = await apiFetch(`/api/sessions/${sessionId}`, {
                 method: 'DELETE',
             })
 
@@ -304,7 +313,7 @@ export default function ChatPage() {
         setMessages(prev => [...prev, assistantMessage])
 
         try {
-            const response = await fetch('/api/chat', {
+            const response = await apiFetch('/api/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -403,6 +412,14 @@ export default function ChatPage() {
                         <PlusOutlined />
                         <span>新建对话</span>
                     </button>
+                    <Link
+                        href={currentWorkspace ? `/agent?workspaceId=${currentWorkspace.id}` : '/agent'}
+                        className={styles.agentModeButton}
+                        target="_blank"
+                    >
+                        <AppstoreOutlined />
+                        <span>Agent 模式</span>
+                    </Link>
                 </div>
 
                 {/* 会话列表 */}

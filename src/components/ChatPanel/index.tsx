@@ -22,6 +22,7 @@ import {
     DownOutlined
 } from '@ant-design/icons'
 import { useAppState } from '@/lib/store'
+import { apiFetch } from '@/lib/api'
 import { Message, Session } from '@/types'
 import styles from './ChatPanel.module.css'
 
@@ -68,7 +69,7 @@ export default function ChatPanel() {
         }
 
         try {
-            const response = await fetch(`/api/workspaces/${currentWorkspace.id}/sessions`, {
+            const response = await apiFetch(`/api/workspaces/${currentWorkspace.id}/sessions`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name: newSessionName }),
@@ -99,7 +100,7 @@ export default function ChatPanel() {
             dispatch({ type: 'SET_CURRENT_SESSION', payload: sessionId })
 
             // 获取会话消息
-            const messagesRes = await fetch(`/api/sessions/${sessionId}/messages`)
+            const messagesRes = await apiFetch(`/api/sessions/${sessionId}/messages`)
             if (messagesRes.ok) {
                 const messagesData = await messagesRes.json()
                 dispatch({ type: 'SET_MESSAGES', payload: messagesData.messages })
@@ -107,7 +108,7 @@ export default function ChatPanel() {
 
             // 刷新文件树（工作区已经选定）
             if (currentWorkspace) {
-                const filesRes = await fetch(`/api/files?workspaceId=${currentWorkspace.id}`)
+                const filesRes = await apiFetch(`/api/files?workspaceId=${currentWorkspace.id}`)
                 if (filesRes.ok) {
                     const filesData = await filesRes.json()
                     dispatch({ type: 'SET_FILE_TREE', payload: filesData.tree })
@@ -127,7 +128,7 @@ export default function ChatPanel() {
             content: '删除会话将删除所有对话记录，确定要删除吗？',
             onOk: async () => {
                 try {
-                    const response = await fetch(`/api/sessions/${sessionId}`, {
+                    const response = await apiFetch(`/api/sessions/${sessionId}`, {
                         method: 'DELETE',
                     })
 
@@ -168,7 +169,7 @@ export default function ChatPanel() {
         dispatch({ type: 'SET_LOADING', payload: true })
 
         try {
-            const response = await fetch('/api/chat', {
+            const response = await apiFetch('/api/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -240,7 +241,7 @@ export default function ChatPanel() {
     const refreshFileTree = async () => {
         if (!currentWorkspace) return
         try {
-            const response = await fetch(`/api/files?workspaceId=${currentWorkspace.id}`)
+            const response = await apiFetch(`/api/files?workspaceId=${currentWorkspace.id}`)
             if (response.ok) {
                 const data = await response.json()
                 dispatch({ type: 'SET_FILE_TREE', payload: data.tree })

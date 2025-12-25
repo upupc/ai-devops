@@ -22,6 +22,7 @@ import {
     ArrowRightOutlined
 } from '@ant-design/icons'
 import { useAppState } from '@/lib/store'
+import { apiFetch } from '@/lib/api'
 import { Workspace, Session } from '@/types'
 import styles from './WorkspaceSelector.module.css'
 
@@ -50,7 +51,7 @@ export default function WorkspaceSelector() {
     const loadWorkspaces = async () => {
         try {
             setLoading(true)
-            const response = await fetch('/api/workspaces')
+            const response = await apiFetch('/api/workspaces')
             if (response.ok) {
                 const data = await response.json()
                 dispatch({ type: 'SET_WORKSPACES', payload: data.workspaces })
@@ -73,7 +74,7 @@ export default function WorkspaceSelector() {
 
         try {
             setCreating(true)
-            const response = await fetch('/api/workspaces', {
+            const response = await apiFetch('/api/workspaces', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name: newWorkspaceName }),
@@ -106,7 +107,7 @@ export default function WorkspaceSelector() {
             dispatch({ type: 'RESET_SESSION_STATE' })
 
             // 加载该工作区的会话列表
-            const sessionsRes = await fetch(`/api/workspaces/${workspace.id}/sessions`)
+            const sessionsRes = await apiFetch(`/api/workspaces/${workspace.id}/sessions`)
             let sessions: Session[] = []
             if (sessionsRes.ok) {
                 const sessionsData = await sessionsRes.json()
@@ -115,7 +116,7 @@ export default function WorkspaceSelector() {
 
             // 如果没有会话，创建默认会话
             if (sessions.length === 0) {
-                const createRes = await fetch(`/api/workspaces/${workspace.id}/sessions`, {
+                const createRes = await apiFetch(`/api/workspaces/${workspace.id}/sessions`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ name: '默认会话' }),
@@ -134,7 +135,7 @@ export default function WorkspaceSelector() {
                 dispatch({ type: 'SET_CURRENT_SESSION', payload: latestSession.id })
 
                 // 加载该会话的消息
-                const messagesRes = await fetch(`/api/sessions/${latestSession.id}/messages`)
+                const messagesRes = await apiFetch(`/api/sessions/${latestSession.id}/messages`)
                 if (messagesRes.ok) {
                     const messagesData = await messagesRes.json()
                     dispatch({ type: 'SET_MESSAGES', payload: messagesData.messages })
@@ -142,7 +143,7 @@ export default function WorkspaceSelector() {
             }
 
             // 加载文件树
-            const filesRes = await fetch(`/api/files?workspaceId=${workspace.id}`)
+            const filesRes = await apiFetch(`/api/files?workspaceId=${workspace.id}`)
             if (filesRes.ok) {
                 const filesData = await filesRes.json()
                 dispatch({ type: 'SET_FILE_TREE', payload: filesData.tree })
@@ -164,7 +165,7 @@ export default function WorkspaceSelector() {
             cancelText: '取消',
             onOk: async () => {
                 try {
-                    const response = await fetch(`/api/workspaces/${workspaceId}`, {
+                    const response = await apiFetch(`/api/workspaces/${workspaceId}`, {
                         method: 'DELETE',
                     })
 

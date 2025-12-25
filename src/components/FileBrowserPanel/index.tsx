@@ -26,6 +26,7 @@ import {
 } from '@ant-design/icons'
 import type { DataNode, TreeProps } from 'antd/es/tree'
 import { useAppState } from '@/lib/store'
+import { apiFetch } from '@/lib/api'
 import { FileNode } from '@/types'
 import styles from './FileBrowserPanel.module.css'
 
@@ -118,7 +119,7 @@ export default function FileBrowserPanel() {
 
         setIsLoading(true)
         try {
-            const response = await fetch(`/api/files?workspaceId=${currentWorkspace.id}`)
+            const response = await apiFetch(`/api/files?workspaceId=${currentWorkspace.id}`)
             if (!response.ok) throw new Error('获取文件列表失败')
 
             const data = await response.json()
@@ -140,7 +141,7 @@ export default function FileBrowserPanel() {
         try {
             // 对路径的每个段分别编码，保留斜杠
             const encodedPath = filePath.split('/').map(segment => encodeURIComponent(segment)).join('/')
-            const response = await fetch(`/api/files/${encodedPath}?workspaceId=${currentWorkspace.id}`)
+            const response = await apiFetch(`/api/files/${encodedPath}?workspaceId=${currentWorkspace.id}`)
             if (!response.ok) throw new Error('读取文件失败')
 
             const data = await response.json()
@@ -169,7 +170,7 @@ export default function FileBrowserPanel() {
         const fullPath = createPath ? `${createPath}/${newName}` : newName
 
         try {
-            const response = await fetch('/api/files', {
+            const response = await apiFetch('/api/files', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -203,7 +204,7 @@ export default function FileBrowserPanel() {
             onOk: async () => {
                 try {
                     const encodedPath = filePath.split('/').map(segment => encodeURIComponent(segment)).join('/')
-                    const response = await fetch(
+                    const response = await apiFetch(
                         `/api/files/${encodedPath}?workspaceId=${currentWorkspace.id}`,
                         { method: 'DELETE' }
                     )
@@ -276,7 +277,7 @@ export default function FileBrowserPanel() {
                 }
             }
 
-            const response = await fetch('/api/files/upload', {
+            const response = await apiFetch('/api/files/upload', {
                 method: 'POST',
                 body: formData,
             })

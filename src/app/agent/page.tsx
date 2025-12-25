@@ -1,8 +1,11 @@
 'use client'
 
 import { Layout, Typography, Button, Space, Spin } from 'antd'
-import { RobotOutlined, ArrowLeftOutlined, FolderOutlined, LoadingOutlined } from '@ant-design/icons'
+import { RobotOutlined, ArrowLeftOutlined, FolderOutlined, LoadingOutlined, MessageOutlined } from '@ant-design/icons'
 import { useState, useEffect, useRef } from 'react'
+import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
+import { apiFetch } from '@/lib/api'
 import ChatPanel from '@/components/ChatPanel'
 import WorkspacePanel from '@/components/WorkspacePanel'
 import FileBrowserPanel from '@/components/FileBrowserPanel'
@@ -12,11 +15,13 @@ import { AppProvider, useAppState } from '@/lib/store'
 const { Header } = Layout
 
 /**
- * 主内容区域组件
+ * 主页面内容组件
  */
 function MainContent() {
+    const searchParams = useSearchParams()
+    const workspaceIdFromUrl = searchParams.get('workspaceId')
     const { state, dispatch } = useAppState()
-    const { currentWorkspace } = state
+    const { currentWorkspace, workspaces } = state
     const [isInitializing, setIsInitializing] = useState(false)
     const containerRef = useRef<HTMLDivElement>(null)
     const dragStateRef = useRef<{
@@ -100,6 +105,37 @@ function MainContent() {
     }
 
     /**
+     * 处理 URL 参数中的 workspaceId
+     */
+    useEffect(() => {
+        const handleWorkspaceFromUrl = async () => {
+            if (workspaceIdFromUrl && workspaces.length === 0) {
+                // 如果 URL 中有 workspaceId 且工作区列表为空，先加载工作区列表
+                try {
+                    const response = await apiFetch('/api/workspaces')
+                    if (response.ok) {
+                        const data = await response.json()
+                        dispatch({ type: 'SET_WORKSPACES', payload: data.workspaces || [] })
+                    }
+                } catch (error) {
+                    console.error('Failed to load workspaces:', error)
+                }
+            }
+        }
+        handleWorkspaceFromUrl()
+    }, [workspaceIdFromUrl, workspaces.length, dispatch])
+
+    // 如果 URL 中有 workspaceId，自动选择该工作区
+    useEffect(() => {
+        if (workspaceIdFromUrl && workspaces.length > 0 && !currentWorkspace) {
+            const targetWorkspace = workspaces.find(w => w.id === workspaceIdFromUrl)
+            if (targetWorkspace) {
+                dispatch({ type: 'SET_CURRENT_WORKSPACE', payload: targetWorkspace })
+            }
+        }
+    }, [workspaceIdFromUrl, workspaces, currentWorkspace, dispatch])
+
+    /**
      * 初始化工作区数据
      */
     useEffect(() => {
@@ -109,8 +145,8 @@ function MainContent() {
                 try {
                     // 并行加载会话和文件树
                     const [sessionsRes, filesRes] = await Promise.all([
-                        fetch(`/api/workspaces/${currentWorkspace.id}/sessions`),
-                        fetch(`/api/files?workspaceId=${currentWorkspace.id}`)
+                        apiFetch(`/api/workspaces/${currentWorkspace.id}/sessions`),
+                        apiFetch(`/api/files?workspaceId=${currentWorkspace.id}`)
                     ])
 
                     if (sessionsRes.ok) {
@@ -136,15 +172,54 @@ function MainContent() {
     // 未选择工作区时显示工作区选择页面
     if (!currentWorkspace) {
         return (
-            <div style={{ height: 'calc(100vh - 64px)', width: '100%' }}>
-                <WorkspaceSelector />
-            </div>
+            <Layout style={{ height: '100vh' }}>
+                <Header style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '0 16px',
+                    background: '#001529'
+                }}>
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                        <RobotOutlined style={{ fontSize: 24, color: '#fff', marginRight: 12 }} />
+                        <Typography.Title level={4} style={{ margin: 0, color: '#fff' }}>
+                            AI DevOps Agent
+                        </Typography.Title>
+                    </div>
+                </Header>
+                <div style={{ height: 'calc(100vh - 64px)', width: '100%' }}>
+                    <WorkspaceSelector />
+                </div>
+            </Layout>
         )
     }
 
     // 已选择工作区时显示会话页面
     return (
-        <>
+        <Layout style={{ height: '100vh' }}>
+            <Header style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '0 16px',
+                background: '#001529'
+            }}>
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                    <RobotOutlined style={{ fontSize: 24, color: '#fff', marginRight: 12 }} />
+                    <Typography.Title level={4} style={{ margin: 0, color: '#fff' }}>
+                        AI DevOps Agent
+                    </Typography.Title>
+                </div>
+                <Link
+                    href={`/chat?workspaceId=${currentWorkspace.id}`}
+                    target="_blank"
+                >
+                    <Button type="primary" icon={<MessageOutlined />}>
+                        Chat 模式
+                    </Button>
+                </Link>
+            </Header>
+
             {/* 工作区导航栏 */}
             <div style={{
                 height: 40,
@@ -238,27 +313,14 @@ function MainContent() {
                     </div>
                 </div>
             )}
-        </>
+        </Layout>
     )
 }
 
 export default function AgentPage() {
     return (
         <AppProvider>
-            <Layout style={{ height: '100vh' }}>
-                <Header style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    padding: '0 16px',
-                    background: '#001529'
-                }}>
-                    <RobotOutlined style={{ fontSize: 24, color: '#fff', marginRight: 12 }} />
-                    <Typography.Title level={4} style={{ margin: 0, color: '#fff' }}>
-                        AI DevOps Agent
-                    </Typography.Title>
-                </Header>
-                <MainContent />
-            </Layout>
+            <MainContent />
         </AppProvider>
     )
 }
