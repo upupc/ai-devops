@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useRef, useCallback } from 'react'
+import React, { useState, useEffect, useRef, useCallback, Suspense } from 'react'
 import {
     PlusOutlined,
     MessageOutlined,
@@ -122,7 +122,8 @@ function MarkdownContent({ content }: { content: string }) {
 const DEFAULT_WORKSPACE_ID = 'default_chat'
 const DEFAULT_WORKSPACE_NAME = 'Claude Chat'
 
-export default function ChatPage() {
+// Chat 页面内容组件（使用 useSearchParams）
+function ChatContent() {
     const searchParams = useSearchParams()
     const workspaceIdFromUrl = searchParams.get('workspaceId')
 
@@ -561,5 +562,21 @@ export default function ChatPage() {
                 </div>
             </main>
         </div>
+    )
+}
+
+// Chat 页面默认导出（用 Suspense 包裹）
+export default function ChatPage() {
+    return (
+        <Suspense fallback={
+            <div className={styles.container}>
+                <div className={styles.loadingContainer}>
+                    <Spin size="large" />
+                    <p>正在加载...</p>
+                </div>
+            </div>
+        }>
+            <ChatContent />
+        </Suspense>
     )
 }

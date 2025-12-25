@@ -1,5 +1,6 @@
 'use client'
 
+import { Suspense } from 'react'
 import { Layout, Typography, Button, Space, Spin } from 'antd'
 import { RobotOutlined, ArrowLeftOutlined, FolderOutlined, LoadingOutlined, MessageOutlined } from '@ant-design/icons'
 import { useState, useEffect, useRef } from 'react'
@@ -322,7 +323,19 @@ function MainContent() {
 export default function AgentPage() {
     return (
         <AppProvider>
-            <MainContent />
+            <Suspense fallback={
+                <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    height: '100vh',
+                    background: '#fff'
+                }}>
+                    <Spin size="large" />
+                </div>
+            }>
+                <MainContent />
+            </Suspense>
         </AppProvider>
     )
 }
