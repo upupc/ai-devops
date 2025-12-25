@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getWorkspaceBySessionId } from "@/lib/session-store";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("WorkspaceAPI");
 
 interface Params {
     params: Promise<{ id: string }>
@@ -22,7 +25,7 @@ export async function GET(request: NextRequest, { params }: Params) {
 
         return NextResponse.json({ workspace })
     } catch (error) {
-        console.error('获取工作区失败:', error)
+        logger.error('获取工作区失败', { error })
         return NextResponse.json(
             { error: '获取工作区失败' },
             { status: 500 }

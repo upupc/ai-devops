@@ -140,6 +140,9 @@ ai-devops/
 │   │   ├── database.ts                     # SQLite 数据库
 │   │   │                                    # - 表结构初始化
 │   │   │                                    # - WAL 模式
+│   │   ├── logger.ts                       # 日志服务 (winston)
+│   │   │                                    # - 支持控制台和文件输出
+│   │   │                                    # - 支持日志级别配置
 │   │   ├── file-service.ts                 # 文件服务
 │   │   │                                    # - 文件树构建
 │   │   │                                    # - 路径安全校验
@@ -192,6 +195,12 @@ npm install
 
 ```env
 ANTHROPIC_API_KEY=your_api_key_here
+
+# 日志配置
+# 日志级别: error, warn, info, http, verbose, debug, silly
+LOG_LEVEL=info
+# 日志目录路径 (留空则仅输出到控制台)
+LOG_DIR=
 ```
 
 从 https://console.anthropic.com/ 获取 API Key。

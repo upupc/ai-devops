@@ -1,6 +1,9 @@
 import { NextRequest } from "next/server";
 import { getSession } from "@/lib/session-store";
 import { getOrCreateChatSession } from "@/lib/chat-session";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("ChatAPI");
 
 /**
  * POST /api/chat - 发送消息并获取 Agent 响应
@@ -68,6 +71,9 @@ export async function POST(request: NextRequest) {
                                 controller.enqueue(
                                     encoder.encode(`data: ${JSON.stringify({ error: parsed.error })}\n\n`)
                                 );
+                                controller.enqueue(encoder.encode("data: 系统处理失败，本次对话结束！\n\n"));
+                                controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+                                controller.close();
                             }
                         } catch {
                             // 忽略解析错误
@@ -84,7 +90,7 @@ export async function POST(request: NextRequest) {
                 chatSession.sendMessage(model, message);
 
             } catch (error) {
-                console.error("Chat API 错误:", error);
+                logger.error("Chat API 错误", { error });
                 controller.enqueue(
                     encoder.encode(`data: ${JSON.stringify({ error: "处理消息失败" })}\n\n`)
                 );

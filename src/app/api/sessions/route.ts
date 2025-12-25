@@ -5,6 +5,9 @@ import {
     createWorkspaceAndSession,
     getWorkspace
 } from "@/lib/session-store";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("SessionsAPI");
 
 /**
  * GET /api/sessions - 获取所有会话
@@ -14,7 +17,7 @@ export async function GET() {
         const sessions = getAllSessions()
         return NextResponse.json({ sessions })
     } catch (error) {
-        console.error('获取会话列表失败:', error)
+        logger.error('获取会话列表失败', { error })
         return NextResponse.json(
             { error: '获取会话列表失败' },
             { status: 500 }
@@ -50,7 +53,7 @@ export async function POST(request: NextRequest) {
             return NextResponse.json(result)
         }
     } catch (error) {
-        console.error('创建会话失败:', error)
+        logger.error('创建会话失败', { error })
         return NextResponse.json(
             { error: '创建会话失败' },
             { status: 500 }

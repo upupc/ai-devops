@@ -8,6 +8,9 @@ import type { AgentSessionOptions } from "./types/agent";
 import * as fs from "fs";
 import * as path from "path";
 import {Query} from "@anthropic-ai/claude-agent-sdk/entrypoints/agentSdkTypes";
+import { createLogger } from "./logger";
+
+const logger = createLogger("AgentClient");
 
 /**
  * 消息队列类
@@ -182,8 +185,7 @@ export class AgentSession {
                     }
                 }
             } catch (error) {
-                // 读取失败时使用默认值，忽略错误
-                console.error("Failed to read SYSTEM.md:", error);
+                logger.warn("读取 SYSTEM.md 失败", { error });
             }
         }
         // 优先使用传入的model参数，否则使用默认值
@@ -204,7 +206,7 @@ export class AgentSession {
                 },
                 settingSources: ["project"],
                 resume: options?.sessionId as any,
-                stderr: data => console.log('claude-agent-sdk:%s',data),
+                stderr: data => logger.debug("claude-agent-sdk: {}", { data }),
                 abortController: this.abortController as any
             }
         });
@@ -220,7 +222,7 @@ export class AgentSession {
 
         // 检查当前 query 是否已取消
         if (this.idleTimedOut) {
-            console.log("检测到 query 已取消，重新创建 query");
+            logger.info("检测到 query 已取消，重新创建 query");
             this.recreateQuery({model:model,...this.options});
         } else if (model) {
             // 只有在 query 未取消时才尝试设置模型
@@ -257,7 +259,7 @@ export class AgentSession {
 
                 yield value;
             } catch (error) {
-                console.warn("Claude Query is aborted by idle timeout:%s",this.sessionId,error);
+                logger.warn("Claude Query 因空闲超时被终止: sessionId={}", { sessionId: this.sessionId, error });
                 return;
             }
         }

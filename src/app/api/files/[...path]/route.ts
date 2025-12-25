@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { readFile, writeFile, deleteFile } from '@/lib/file-service'
+import { createLogger } from '@/lib/logger'
+
+const logger = createLogger('FilePathAPI')
 
 interface Params {
     params: Promise<{ path: string[] }>
@@ -33,7 +36,7 @@ export async function GET(request: NextRequest, { params }: Params) {
 
         return NextResponse.json({ content, encoding: 'utf-8' })
     } catch (error) {
-        console.error('读取文件失败:', error)
+        logger.error('读取文件失败', { error })
         const message = error instanceof Error ? error.message : '读取文件失败'
         return NextResponse.json(
             { error: message },
@@ -70,7 +73,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
 
         return NextResponse.json({ success: true })
     } catch (error) {
-        console.error('更新文件失败:', error)
+        logger.error('更新文件失败', { error })
         const message = error instanceof Error ? error.message : '更新文件失败'
         return NextResponse.json(
             { error: message },
@@ -107,7 +110,7 @@ export async function DELETE(request: NextRequest, { params }: Params) {
 
         return NextResponse.json({ success: true })
     } catch (error) {
-        console.error('删除文件失败:', error)
+        logger.error('删除文件失败', { error })
         const message = error instanceof Error ? error.message : '删除文件失败'
         return NextResponse.json(
             { error: message },

@@ -8,6 +8,9 @@ import { db, WorkspaceRow, SessionRow, MessageRow } from "./database";
 import fs from "fs";
 import fsPromises from "fs/promises";
 import path from "path";
+import { createLogger } from "./logger";
+
+const logger = createLogger("SessionStore");
 
 /**
  * 工作区根目录
@@ -124,8 +127,7 @@ async function updateSettingsJson(
             "utf-8"
         );
     } catch (error) {
-        // 如果文件不存在或读取失败，忽略错误
-        console.warn("Failed to update settings.json:", error);
+        logger.warn("更新 settings.json 失败", { error });
     }
 }
 

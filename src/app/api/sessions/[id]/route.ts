@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession, deleteSession } from "@/lib/session-store";
 import { deleteChatSession } from "@/lib/chat-session";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("SessionAPI");
 
 interface Params {
     params: Promise<{ id: string }>
@@ -23,7 +26,7 @@ export async function GET(request: NextRequest, { params }: Params) {
 
         return NextResponse.json({ session })
     } catch (error) {
-        console.error('获取会话失败:', error)
+        logger.error('获取会话失败', { error })
         return NextResponse.json(
             { error: '获取会话失败' },
             { status: 500 }
@@ -43,7 +46,7 @@ export async function DELETE(request: NextRequest, { params }: Params) {
         deleteSession(id);
         return NextResponse.json({ success: true });
     } catch (error) {
-        console.error("删除会话失败:", error);
+        logger.error("删除会话失败", { error });
         return NextResponse.json(
             { error: "删除会话失败" },
             { status: 500 }

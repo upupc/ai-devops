@@ -10,6 +10,9 @@ import type { BroadcastMessage, Subscriber } from "./types/agent";
 import type {BetaMessage as APIAssistantMessage} from "@anthropic-ai/sdk/resources/beta/messages/messages";
 import * as crypto from "crypto";
 import {SDKAssistantMessageError} from "@anthropic-ai/claude-agent-sdk/entrypoints/agentSdkTypes";
+import { createLogger } from "./logger";
+
+const logger = createLogger("ChatSession");
 
 /**
  * 活跃的 ChatSession 实例缓存
@@ -77,7 +80,7 @@ export class ChatSession {
         try{
             this.agentSession.sendMessage(nextModelId, content);
         }catch (error){
-            console.error(`ChatSession ${this.sessionId} error:`, error);
+            logger.error("发送消息失败: sessionId={}, error={}", { sessionId: this.sessionId, error });
             this.broadcastError((error as Error).message);
         }
 
@@ -102,7 +105,7 @@ export class ChatSession {
                 this.handleSDKMessage(message);
             }
         } catch (error) {
-            console.error(`ChatSession ${this.sessionId} error:`, error);
+            logger.error("监听 Agent 输出失败: sessionId={}", { sessionId: this.sessionId, error });
             this.broadcastError((error as Error).message);
         } finally {
             this.isListening = false;
@@ -129,15 +132,25 @@ export class ChatSession {
         switch (message.type) {
             case "assistant":
                 this.handleAssistantMessage(message);
+                if(logger.isDebugEnabled()){
+                    logger.debug("助手消息: sessionId={}, content={}", { sessionId: this.sessionId, content: JSON.stringify(message.message.content) });
+                }
                 break;
             case "result":
                 this.handleResultMessage(message);
+                if(logger.isDebugEnabled()){
+                    if(message.subtype === "success"){
+                        logger.debug("对话完成: sessionId={}, result={}", { sessionId: this.sessionId, result: message.result });
+                    }else{
+                        logger.debug("对话异常: sessionId={}, subtype={}, errors={}", { sessionId: this.sessionId, subtype: message.subtype, errors: JSON.stringify(message.errors) });
+                    }
+                }
                 break;
             case "system":
-                // 系统消息可以用于日志或调试
-                console.log(`[System] ${this.sessionId}:`, message.subtype);
+                logger.info("系统消息: sessionId={}, subtype={}", { sessionId: this.sessionId, subtype: message.subtype });
                 break;
         }
+
     }
 
     /**
@@ -193,17 +206,25 @@ export class ChatSession {
     private handleResultMessage(message: SDKMessage & { type: "result" }): void {
         const isSuccess = message.subtype === "success";
 
-        this.broadcast({
-            type: "result",
-            success: isSuccess,
-            sessionId: this.sessionId,
-            cost: message.total_cost_usd,
-            duration: message.duration_ms
-        });
+        if(isSuccess){
+            this.broadcast({
+                type: "result",
+                success: isSuccess,
+                sessionId: this.sessionId,
+                cost: message.total_cost_usd,
+                duration: message.duration_ms,
+            });
+        }else{
+            this.broadcast({
+                type: "error",
+                error: JSON.stringify(message.errors),
+                sessionId: this.sessionId,
+            });
+        }
 
         // 如果是错误，记录错误信息
         if (!isSuccess && "errors" in message && message.errors) {
-            console.error(`ChatSession ${this.sessionId} result error:`, message.errors);
+            logger.error("对话结果错误: sessionId={}, errors={}", { sessionId: this.sessionId, errors: message.errors });
         }
     }
 
@@ -239,7 +260,7 @@ export class ChatSession {
                     subscriber.send(messageStr);
                 }
             } catch (error) {
-                console.error("Broadcast error:", error);
+                logger.error("广播消息失败", { error });
                 this.subscribers.delete(subscriber);
             }
         });

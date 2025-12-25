@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { uploadFiles } from '@/lib/file-service'
+import { createLogger } from '@/lib/logger'
+
+const logger = createLogger('UploadAPI')
 
 /**
  * POST /api/files/upload - 上传文件或文件夹
@@ -61,7 +64,7 @@ export async function POST(request: NextRequest) {
             failed: result.failed,
         })
     } catch (error) {
-        console.error('上传文件失败:', error)
+        logger.error('上传文件失败', { error })
         const message = error instanceof Error ? error.message : '上传失败'
         return NextResponse.json(
             { error: message },

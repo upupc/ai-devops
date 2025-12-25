@@ -6,6 +6,9 @@ import {
     createDirectory,
     deleteFile
 } from '@/lib/file-service'
+import { createLogger } from '@/lib/logger'
+
+const logger = createLogger('FilesAPI')
 
 /**
  * GET /api/files - 获取文件树
@@ -25,7 +28,7 @@ export async function GET(request: NextRequest) {
         const tree = await getFileTree(workspaceId)
         return NextResponse.json({ tree })
     } catch (error) {
-        console.error('获取文件树失败:', error)
+        logger.error('获取文件树失败', { error })
         return NextResponse.json(
             { error: '获取文件树失败' },
             { status: 500 }
@@ -64,7 +67,7 @@ export async function POST(request: NextRequest) {
 
         return NextResponse.json({ success: true })
     } catch (error) {
-        console.error('创建文件失败:', error)
+        logger.error('创建文件失败', { error })
         const message = error instanceof Error ? error.message : '创建失败'
         return NextResponse.json(
             { error: message },
