@@ -49,3 +49,6 @@ package-lock.json
 
 # Ensure project-artifacts is tracked by git
 !project-artifacts
+
+.cursor
+.aone_copilot
