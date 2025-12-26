@@ -14,38 +14,22 @@ description: 初始化一个新的工作空间，包括目录创建、Git 仓库
 ## 命令格式
 
 ```bash
-/init-workspace --path <工作空间路径> --git-repo <Git仓库URL> [--branch <分支名>]
+/init-workspace
 ```
 
 ## 参数说明
+从上下文中获取参数
+- path: 工作空间路径
+- gitRepo: Git 仓库 URL
+- username: Git 用户名
+- gitToken: Git 令牌
 
-### 必需参数
-
-- **--path**: 工作空间的本地路径
-  - 类型：字符串
-  - 格式：绝对路径或相对路径
-  - 示例：`/Users/username/workspace/my-project` 或 `./my-project`
-
-- **--git-repo**: Git 仓库地址
-  - 类型：字符串
-  - 格式：`http://<用户名>:<Git令牌>@gitlab.alibaba-inc.com/<组织>/<项目>.git`
-  - 示例：`http://user:token@gitlab.alibaba-inc.com/team/my-project.git`
-
-### 可选参数
-
-- **--branch**: Git 分支名
-  - 类型：字符串
-  - 默认值：`master`
-  - 示例：`develop`、`feature/new-feature`
 
 ## 使用示例
 
 ```bash
 # 初始化工作空间
-/init-workspace --path /Users/workspace/my-project --git-repo http://gitlab.alibaba-inc.com/team/my-project.git
-
-# 指定分支初始化
-/init-workspace --path ./my-project --git-repo http://gitlab.alibaba-inc.com/team/my-project.git --branch develop
+/init-workspace
 ```
 
 ## 执行步骤
@@ -65,16 +49,16 @@ cd <path>
 ```
 
 ### 3. Git 仓库初始化
-
+使用username、gitToken和gitRepo构造含有用户名和令牌信息的Git仓库URL
 ```bash
 # 创建目录并初始化 Git
 cd <path>
 git init
 
-git remote set-url origin <git-repo>
+git remote set-url origin <含验证信息的Git仓库URL>
 
 # 拉取最新代码
-git pull origin <branch>
+git pull origin master
 ```
 
 ### 4. 初始化spec-kit
