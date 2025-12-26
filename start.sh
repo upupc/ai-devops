@@ -6,7 +6,7 @@ set -e
 
 APP_NAME="ai-devops"
 PID_FILE=".data/${APP_NAME}.pid"
-LOG_FILE=".data/${APP_NAME}.log"
+LOG_FILE="logs/app.log"
 PORT=${PORT:-3000}
 
 # 确保数据目录存在
