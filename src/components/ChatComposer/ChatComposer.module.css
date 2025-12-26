@@ -1,0 +1,496 @@
+/* ChatComposer 通用样式 */
+
+.container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+}
+
+/* ==================== 消息列表区域 ==================== */
+
+.messagesContainer {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.messagesWrapper {
+    height: 100%;
+}
+
+.messagesList {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.emptyState {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    min-height: 200px;
+}
+
+/* 消息行 */
+.messageRow {
+    display: flex;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.userRow {
+    justify-content: flex-end;
+}
+
+.assistantRow {
+    justify-content: flex-start;
+}
+
+/* 消息内容 */
+.messageContent {
+    max-width: 85%;
+    line-height: 1.6;
+    font-size: 14px;
+    word-break: break-word;
+}
+
+.userMessage {
+    background-color: #1890ff;
+    color: #fff;
+    padding: 10px 14px;
+    border-radius: 16px 16px 4px 16px;
+}
+
+.assistantMessage {
+    background-color: #f0f0f0;
+    color: #333;
+    padding: 10px 14px;
+    border-radius: 16px 16px 16px 4px;
+}
+
+/* 思考中指示器 */
+.thinkingIndicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px;
+}
+
+.thinkingDots {
+    display: flex;
+    gap: 4px;
+}
+
+.thinkingDots span {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: #999;
+    animation: thinkingBounce 1.4s infinite ease-in-out;
+}
+
+.thinkingDots span:nth-child(1) {
+    animation-delay: -0.32s;
+}
+
+.thinkingDots span:nth-child(2) {
+    animation-delay: -0.16s;
+}
+
+.thinkingDots span:nth-child(3) {
+    animation-delay: 0;
+}
+
+@keyframes thinkingBounce {
+    0%, 80%, 100% {
+        transform: scale(0.6);
+        opacity: 0.5;
+    }
+    40% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.thinkingText {
+    color: #666;
+    font-size: 13px;
+}
+
+/* ==================== 输入区域 ==================== */
+
+.composerContainer {
+    padding-top: 12px;
+    flex-shrink: 0;
+}
+
+.quickToolbar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+    padding: 0 4px;
+}
+
+.quickToolbar :global(.ant-btn) {
+    border-radius: 8px !important;
+    font-size: 13px;
+    height: 32px;
+    padding: 0 12px;
+    color: rgba(0, 0, 0, 0.65);
+    background: rgba(0, 0, 0, 0.04);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.quickToolbar :global(.ant-btn:hover:not(:disabled)) {
+    background: rgba(0, 0, 0, 0.08);
+    border-color: rgba(0, 0, 0, 0.15);
+}
+
+.composer {
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    border-radius: 20px;
+    background: #fff;
+    padding: 14px 14px 10px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.composer:focus-within {
+    border-color: rgba(0, 0, 0, 0.2);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.composer :global(.ant-input) {
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    padding: 0 !important;
+    resize: none !important;
+    font-size: 15px;
+    line-height: 1.6;
+}
+
+.composer :global(.ant-input::placeholder) {
+    color: rgba(0, 0, 0, 0.45);
+}
+
+.composerTextarea {
+    margin-bottom: 10px;
+}
+
+.composerFooter {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.composerLeft,
+.composerRight {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.composerIconButton {
+    width: 34px !important;
+    height: 34px !important;
+    border-radius: 10px !important;
+    padding: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    color: rgba(0, 0, 0, 0.65) !important;
+}
+
+.composerIconButton:not(:disabled):hover {
+    background: rgba(0, 0, 0, 0.04) !important;
+}
+
+.modelSelect {
+    border-radius: 10px;
+    padding: 4px 6px;
+}
+
+.modelSelect:not(:global(.ant-select-disabled)):hover {
+    background: rgba(0, 0, 0, 0.04);
+}
+
+.modelSelect :global(.ant-select-selector) {
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+}
+
+.modelSelect :global(.ant-select-selection-item) {
+    color: rgba(0, 0, 0, 0.75);
+    font-size: 13px;
+}
+
+.modelSelect :global(.ant-select-arrow) {
+    color: rgba(0, 0, 0, 0.55);
+}
+
+.sendButton {
+    width: 38px !important;
+    height: 38px !important;
+    border-radius: 10px !important;
+    padding: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: rgba(217, 119, 87, 0.45) !important;
+    color: rgba(0, 0, 0, 0.75) !important;
+}
+
+.sendButton:not(:disabled):hover {
+    background: rgba(217, 119, 87, 0.55) !important;
+}
+
+.sendButton:disabled {
+    background: rgba(0, 0, 0, 0.06) !important;
+    color: rgba(0, 0, 0, 0.35) !important;
+}
+
+.disclaimer {
+    text-align: center;
+    font-size: 12px;
+    color: #999;
+    margin: 8px 0 0;
+}
+
+/* ==================== 紧凑型变体 (用于面板) ==================== */
+
+.compactVariant {
+    padding: 12px;
+}
+
+.compactVariant .messagesContainer {
+    margin-bottom: 12px;
+}
+
+.compactVariant .messageContent {
+    font-size: 14px;
+}
+
+.compactVariant .composer {
+    border-radius: 18px;
+    padding: 12px 12px 8px;
+}
+
+/* ==================== 全屏型变体 (用于页面) ==================== */
+
+.fullVariant {
+    background-color: #fff;
+}
+
+.fullVariant .messagesContainer {
+    padding: 20px 0;
+}
+
+.fullVariant .messagesWrapper {
+    max-width: 768px;
+    margin: 0 auto;
+    padding: 0 24px;
+}
+
+.fullVariant .messagesList {
+    gap: 20px;
+}
+
+.fullVariant .messageContent {
+    font-size: 15px;
+    max-width: 100%;
+}
+
+.fullVariant .userMessage {
+    background-color: #f0f0f0;
+    color: #1a1a1a;
+    padding: 12px 16px;
+    border-radius: 18px 18px 4px 18px;
+}
+
+.fullVariant .assistantMessage {
+    background-color: transparent;
+    color: #1a1a1a;
+    padding: 0;
+    border-radius: 0;
+}
+
+.fullVariant .composerContainer {
+    padding: 20px 32px 28px;
+    background: linear-gradient(180deg, rgba(249, 250, 251, 0.4) 0%, rgba(255, 255, 255, 0.95) 40%, #fff 100%);
+}
+
+.fullVariant .composer {
+    max-width: 960px;
+    margin: 0 auto;
+    border-radius: 22px;
+    padding: 18px 18px 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+}
+
+.fullVariant .composer:focus-within {
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.1);
+}
+
+.fullVariant .composer :global(.ant-input) {
+    font-size: 18px;
+}
+
+.fullVariant .emptyState {
+    height: 60vh;
+}
+
+.fullVariant .disclaimer {
+    max-width: 768px;
+    margin: 8px auto 0;
+}
+
+/* ==================== 滚动条样式 ==================== */
+
+.messagesContainer::-webkit-scrollbar {
+    width: 6px;
+}
+
+.messagesContainer::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.messagesContainer::-webkit-scrollbar-thumb {
+    background-color: #ddd;
+    border-radius: 3px;
+}
+
+/* ==================== 响应式设计 ==================== */
+
+@media (max-width: 768px) {
+    .fullVariant .messagesWrapper {
+        padding: 0 16px;
+    }
+
+    .fullVariant .composerContainer {
+        padding: 12px 16px 18px;
+    }
+
+    .fullVariant .composer {
+        padding: 14px 14px 10px;
+        border-radius: 18px;
+    }
+
+    .fullVariant .messageContent {
+        max-width: 90%;
+    }
+}
+
+/* ==================== 加载指示器 ==================== */
+
+.loadingIndicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 0;
+}
+
+/* ==================== 工具调用样式 ==================== */
+
+.toolCalls {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.toolCall {
+    padding: 8px 12px;
+    background-color: rgba(0, 0, 0, 0.03);
+    border-radius: 8px;
+    margin-bottom: 8px;
+}
+
+.toolCall:last-child {
+    margin-bottom: 0;
+}
+
+.toolOutput {
+    margin: 8px 0 0;
+    padding: 8px;
+    background-color: rgba(0, 0, 0, 0.05);
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: pre-wrap;
+    overflow-x: auto;
+}
+
+/* ==================== Markdown 样式 ==================== */
+
+.paragraph {
+    margin: 0 0 12px;
+}
+
+.paragraph:last-child {
+    margin-bottom: 0;
+}
+
+.list {
+    margin: 0 0 12px;
+    padding-left: 24px;
+}
+
+.listItem {
+    margin-bottom: 4px;
+}
+
+.heading1 {
+    font-size: 1.5em;
+    font-weight: 600;
+    margin: 16px 0 8px;
+}
+
+.heading2 {
+    font-size: 1.3em;
+    font-weight: 600;
+    margin: 14px 0 8px;
+}
+
+.heading3 {
+    font-size: 1.1em;
+    font-weight: 600;
+    margin: 12px 0 8px;
+}
+
+.inlineCode {
+    background-color: rgba(0, 0, 0, 0.06);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+    font-size: 0.9em;
+}
+
+.blockquote {
+    margin: 12px 0;
+    padding: 8px 16px;
+    border-left: 4px solid #D97757;
+    background-color: #fdf6f4;
+    color: #666;
+}
+
+.link {
+    color: #D97757;
+    text-decoration: none;
+}
+
+.link:hover {
+    text-decoration: underline;
+}
