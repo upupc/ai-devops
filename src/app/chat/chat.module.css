@@ -83,99 +83,6 @@
     color: #e89575;
 }
 
-.iconButton {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 40px;
-    height: 40px;
-    background-color: #2a2a2a;
-    border: 1px solid #3a3a3a;
-    border-radius: 8px;
-    color: #999;
-    cursor: pointer;
-    transition: all 0.15s ease;
-}
-
-.iconButton:hover {
-    background-color: #3a3a3a;
-    color: #fff;
-}
-
-/* 工作区选择器 */
-.workspaceSelector {
-    margin: 0 12px 12px;
-    background-color: #2a2a2a;
-    border-radius: 8px;
-    overflow: hidden;
-}
-
-.workspaceSelectorHeader {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px 12px;
-    border-bottom: 1px solid #3a3a3a;
-    color: #999;
-    font-size: 12px;
-}
-
-.addWorkspaceBtn {
-    background: none;
-    border: none;
-    color: #999;
-    cursor: pointer;
-    padding: 4px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 4px;
-    transition: all 0.15s ease;
-}
-
-.addWorkspaceBtn:hover {
-    background-color: #3a3a3a;
-    color: #fff;
-}
-
-.workspaceList {
-    max-height: 200px;
-    overflow-y: auto;
-}
-
-.workspaceItem {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 12px;
-    color: #ccc;
-    font-size: 14px;
-    cursor: pointer;
-    transition: all 0.15s ease;
-}
-
-.workspaceItem:hover {
-    background-color: #3a3a3a;
-}
-
-.workspaceItem.active {
-    background-color: #D97757;
-    color: #fff;
-}
-
-/* 当前工作区显示 */
-.currentWorkspace {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin: 0 12px 12px;
-    padding: 10px 12px;
-    background-color: #2a2a2a;
-    border-radius: 8px;
-    color: #D97757;
-    font-size: 13px;
-}
-
 /* 会话列表 */
 .sessionList {
     flex: 1;
@@ -240,32 +147,6 @@
     background-color: rgba(255, 77, 79, 0.1);
 }
 
-/* 侧边栏底部 */
-.sidebarFooter {
-    padding: 12px;
-    border-top: 1px solid #2a2a2a;
-}
-
-.settingsButton {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    width: 100%;
-    padding: 10px 12px;
-    background: none;
-    border: none;
-    border-radius: 8px;
-    color: #999;
-    font-size: 14px;
-    cursor: pointer;
-    transition: all 0.15s ease;
-}
-
-.settingsButton:hover {
-    background-color: #2a2a2a;
-    color: #fff;
-}
-
 /* 主内容区域 */
 .main {
     flex: 1;
@@ -275,26 +156,13 @@
     background-color: #fff;
 }
 
-/* 消息区域 */
-.messagesContainer {
-    flex: 1;
-    overflow-y: auto;
-    padding: 20px 0;
-}
-
-.messagesWrapper {
-    max-width: 768px;
-    margin: 0 auto;
-    padding: 0 24px;
-}
-
 /* 空状态 */
 .emptyState {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    height: 60vh;
+    height: 100%;
     text-align: center;
     color: #666;
 }
@@ -309,65 +177,6 @@
 .emptyState p {
     font-size: 15px;
     color: #666;
-}
-
-/* 消息行 */
-.messageRow {
-    display: flex;
-    gap: 16px;
-    margin-bottom: 24px;
-    animation: fadeIn 0.3s ease;
-}
-
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.userRow {
-    justify-content: flex-end;
-}
-
-.assistantRow {
-    justify-content: flex-start;
-}
-
-/* 头像 */
-.avatar {
-    flex-shrink: 0;
-    width: 28px;
-    height: 28px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-/* 消息内容 */
-.messageContent {
-    max-width: 85%;
-    line-height: 1.6;
-    font-size: 15px;
-}
-
-.userMessage {
-    background-color: #f0f0f0;
-    padding: 12px 16px;
-    border-radius: 18px 18px 4px 18px;
-    color: #1a1a1a;
-}
-
-.userMessage p {
-    margin: 0;
-}
-
-.assistantMessage {
-    color: #1a1a1a;
 }
 
 /* 思考中提示动画 */
@@ -410,8 +219,6 @@
         opacity: 1;
     }
 }
-
-/* 思考中动态效果 */
 
 /* Markdown 样式 */
 .paragraph {
@@ -474,162 +281,17 @@
     text-decoration: underline;
 }
 
-/* 输入区域 */
-.composerContainer {
-    padding: 20px 32px 28px;
-    background: linear-gradient(180deg, rgba(249, 250, 251, 0.4) 0%, rgba(255, 255, 255, 0.95) 40%, #fff 100%);
-}
-
-.composer {
-    max-width: 960px;
-    margin: 0 auto;
-    border: 1px solid rgba(0, 0, 0, 0.14);
-    border-radius: 22px;
-    background: #fff;
-    padding: 18px 18px 12px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.composer:focus-within {
-    border-color: rgba(0, 0, 0, 0.2);
-    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.1);
-}
-
-.composer :global(.ant-input) {
-    border: none !important;
-    box-shadow: none !important;
-    background: transparent !important;
-    padding: 0 !important;
-    resize: none !important;
-    font-size: 18px;
-    line-height: 1.6;
-    color: #1a1a1a;
-}
-
-.composer :global(.ant-input::placeholder) {
-    color: rgba(0, 0, 0, 0.5);
-}
-
-.composerTextarea {
-    margin-bottom: 12px;
-}
-
-.composerFooter {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-top: 14px;
-    gap: 12px;
-}
-
-.composerLeft,
-.composerRight {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.composerIconButton {
-    width: 36px;
-    height: 36px;
-    border: none;
-    border-radius: 12px;
-    background: transparent;
-    color: rgba(0, 0, 0, 0.65);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: background 0.15s ease, color 0.15s ease;
-}
-
-.composerIconButton:hover:not(:disabled) {
-    background: rgba(0, 0, 0, 0.05);
-    color: rgba(0, 0, 0, 0.8);
-}
-
-.composerIconButton:disabled {
-    cursor: not-allowed;
-    color: rgba(0, 0, 0, 0.3);
-}
-
-.modelSelect {
-    border-radius: 12px;
-    padding: 6px 8px;
-}
-
-.modelSelect:not(:global(.ant-select-disabled)):hover {
-    background: rgba(0, 0, 0, 0.04);
-}
-
-.modelSelect :global(.ant-select-selector) {
-    border: none !important;
-    background: transparent !important;
-    box-shadow: none !important;
-    padding: 0 !important;
-}
-
-.modelSelect :global(.ant-select-selection-item) {
-    color: rgba(0, 0, 0, 0.75);
-    font-size: 14px;
-}
-
-.modelSelect :global(.ant-select-arrow) {
-    color: rgba(0, 0, 0, 0.55);
-}
-
-.sendButton {
-    width: 40px !important;
-    height: 40px !important;
-    border-radius: 12px !important;
-    padding: 0 !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    background: rgba(217, 119, 87, 0.45) !important;
-    color: rgba(0, 0, 0, 0.75) !important;
-}
-
-.sendButton:not(:disabled):hover {
-    background: rgba(217, 119, 87, 0.55) !important;
-}
-
-.sendButton:disabled {
-    background: rgba(0, 0, 0, 0.06) !important;
-    color: rgba(0, 0, 0, 0.35) !important;
-}
-
-/* 免责声明 */
-.disclaimer {
-    max-width: 768px;
-    margin: 8px auto 0;
-    text-align: center;
-    font-size: 12px;
-    color: #999;
-}
-
 /* 滚动条样式 */
-.sessionList::-webkit-scrollbar,
-.messagesContainer::-webkit-scrollbar,
-.workspaceList::-webkit-scrollbar {
+.sessionList::-webkit-scrollbar {
     width: 6px;
 }
 
-.sessionList::-webkit-scrollbar-track,
-.messagesContainer::-webkit-scrollbar-track,
-.workspaceList::-webkit-scrollbar-track {
+.sessionList::-webkit-scrollbar-track {
     background: transparent;
 }
 
-.sessionList::-webkit-scrollbar-thumb,
-.workspaceList::-webkit-scrollbar-thumb {
+.sessionList::-webkit-scrollbar-thumb {
     background-color: #3a3a3a;
-    border-radius: 3px;
-}
-
-.messagesContainer::-webkit-scrollbar-thumb {
-    background-color: #ddd;
     border-radius: 3px;
 }
 
@@ -645,31 +307,5 @@
 
     .sidebar.collapsed {
         width: 0;
-    }
-
-    .messagesWrapper {
-        padding: 0 16px;
-    }
-
-    .composerContainer {
-        padding: 12px 16px 18px;
-    }
-
-    .composer {
-        padding: 14px 14px 10px;
-        border-radius: 18px;
-    }
-
-    .messageContent {
-        max-width: 90%;
-    }
-
-    .composerFooter {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .composerRight {
-        justify-content: space-between;
     }
 }

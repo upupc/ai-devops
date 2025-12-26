@@ -1,58 +1,33 @@
 'use client'
 
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState } from 'react'
 import {
     Input,
     Button,
-    Typography,
     Modal,
     message,
-    Avatar,
     Empty,
     Select
 } from 'antd'
 import {
     PlusOutlined,
     DeleteOutlined,
-    UserOutlined,
-    RobotOutlined,
-    LoadingOutlined,
-    ClockCircleOutlined,
-    ArrowUpOutlined,
-    DownOutlined
 } from '@ant-design/icons'
 import { useAppState } from '@/lib/store'
 import { apiFetch } from '@/lib/api'
-import { Message, Session, Workspace } from '@/types'
+import { Message, Session } from '@/types'
+import ChatComposer, { ChatMessage, StreamEvent } from '@/components/ChatComposer'
 import styles from './ChatPanel.module.css'
-
-const { TextArea } = Input
-const { Text } = Typography
 
 /**
  * 聊天面板组件
  */
 export default function ChatPanel() {
     const { state, dispatch } = useAppState()
-    const [inputValue, setInputValue] = useState('')
     const [newSessionName, setNewSessionName] = useState('')
     const [isCreateModalVisible, setIsCreateModalVisible] = useState(false)
-    const messagesEndRef = useRef<HTMLDivElement>(null)
-    const [selectedModel, setSelectedModel] = useState('claude-sonnet-4-5-20250929')
 
     const { sessions, currentSessionId, messages, isLoading, currentWorkspace } = state
-    const [isInitializing, setIsInitializing] = useState(false)
-
-    /**
-     * 滚动到最新消息
-     */
-    const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-    }
-
-    useEffect(() => {
-        scrollToBottom()
-    }, [messages])
 
     /**
      * 创建新会话（在当前工作区下）
@@ -99,14 +74,12 @@ export default function ChatPanel() {
         try {
             dispatch({ type: 'SET_CURRENT_SESSION', payload: sessionId })
 
-            // 获取会话消息
             const messagesRes = await apiFetch(`/api/sessions/${sessionId}/messages`)
             if (messagesRes.ok) {
                 const messagesData = await messagesRes.json()
                 dispatch({ type: 'SET_MESSAGES', payload: messagesData.messages })
             }
 
-            // 刷新文件树（工作区已经选定）
             if (currentWorkspace) {
                 const filesRes = await apiFetch(`/api/files?workspaceId=${currentWorkspace.id}`)
                 if (filesRes.ok) {
@@ -147,183 +120,6 @@ export default function ChatPanel() {
     }
 
     /**
-     * 发送指定内容的消息
-     */
-    const sendMessageWithContent = async (content: string) => {
-        if (!content.trim()) return
-        if (!currentSessionId) {
-            message.warning('请先创建或选择一个会话')
-            return
-        }
-
-        const userMessage: Message = {
-            id: `msg_${Date.now()}`,
-            sessionId: currentSessionId,
-            role: 'user',
-            content: content,
-            createdAt: new Date(),
-        }
-
-        dispatch({ type: 'ADD_MESSAGE', payload: userMessage })
-        dispatch({ type: 'SET_LOADING', payload: true })
-
-        try {
-            const response = await apiFetch('/api/chat', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    sessionId: currentSessionId,
-                    message: content,
-                    model: selectedModel,
-                }),
-            })
-
-            if (!response.ok) throw new Error('发送消息失败')
-
-            // 处理流式响应
-            const reader = response.body?.getReader()
-            if (!reader) throw new Error('无法读取响应')
-
-            const assistantMessage: Message = {
-                id: `msg_${Date.now()}_assistant`,
-                sessionId: currentSessionId,
-                role: 'assistant',
-                content: '',
-                createdAt: new Date(),
-            }
-            dispatch({ type: 'ADD_MESSAGE', payload: assistantMessage })
-
-            const decoder = new TextDecoder()
-            let buffer = ''
-
-            while (true) {
-                const { done, value } = await reader.read()
-                if (done) break
-
-                buffer += decoder.decode(value, { stream: true })
-                const lines = buffer.split('\n')
-                buffer = lines.pop() || ''
-
-                lines.forEach(line => {
-                    if (line.startsWith('data: ')) {
-                        const data = line.slice(6)
-                        if (data === '[DONE]') return
-
-                        try {
-                            const parsed = JSON.parse(data)
-                            if (parsed.content) {
-                                dispatch({
-                                    type: 'UPDATE_MESSAGE',
-                                    payload: { id: assistantMessage.id, content: parsed.content },
-                                })
-                            }
-                            if (parsed.fileChanged) {
-                                // 刷新文件树
-                                refreshFileTree()
-                            }
-                        } catch {
-                            // 忽略解析错误
-                        }
-                    }
-                })
-            }
-        } catch {
-            message.error('发送消息失败')
-        } finally {
-            dispatch({ type: 'SET_LOADING', payload: false })
-        }
-    }
-
-    /**
-     * 发送消息
-     */
-    const handleSendMessage = async () => {
-        if (!inputValue.trim()) return
-        if (!currentSessionId) {
-            message.warning('请先创建或选择一个会话')
-            return
-        }
-
-        const userMessage: Message = {
-            id: `msg_${Date.now()}`,
-            sessionId: currentSessionId,
-            role: 'user',
-            content: inputValue,
-            createdAt: new Date(),
-        }
-
-        dispatch({ type: 'ADD_MESSAGE', payload: userMessage })
-        setInputValue('')
-        dispatch({ type: 'SET_LOADING', payload: true })
-
-        try {
-            const response = await apiFetch('/api/chat', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    sessionId: currentSessionId,
-                    message: inputValue,
-                    model: selectedModel,
-                }),
-            })
-
-            if (!response.ok) throw new Error('发送消息失败')
-
-            // 处理流式响应
-            const reader = response.body?.getReader()
-            if (!reader) throw new Error('无法读取响应')
-
-            const assistantMessage: Message = {
-                id: `msg_${Date.now()}_assistant`,
-                sessionId: currentSessionId,
-                role: 'assistant',
-                content: '',
-                createdAt: new Date(),
-            }
-            dispatch({ type: 'ADD_MESSAGE', payload: assistantMessage })
-
-            const decoder = new TextDecoder()
-            let buffer = ''
-
-            while (true) {
-                const { done, value } = await reader.read()
-                if (done) break
-
-                buffer += decoder.decode(value, { stream: true })
-                const lines = buffer.split('\n')
-                buffer = lines.pop() || ''
-
-                lines.forEach(line => {
-                    if (line.startsWith('data: ')) {
-                        const data = line.slice(6)
-                        if (data === '[DONE]') return
-
-                        try {
-                            const parsed = JSON.parse(data)
-                            if (parsed.content) {
-                                dispatch({
-                                    type: 'UPDATE_MESSAGE',
-                                    payload: { id: assistantMessage.id, content: parsed.content },
-                                })
-                            }
-                            if (parsed.fileChanged) {
-                                // 刷新文件树
-                                refreshFileTree()
-                            }
-                        } catch {
-                            // 忽略解析错误
-                        }
-                    }
-                })
-            }
-        } catch {
-            message.error('发送消息失败')
-        } finally {
-            dispatch({ type: 'SET_LOADING', payload: false })
-        }
-    }
-
-    /**
      * 刷新文件树
      */
     const refreshFileTree = async () => {
@@ -340,58 +136,68 @@ export default function ChatPanel() {
     }
 
     /**
-     * 处理键盘事件
+     * 添加消息
      */
-    const handleKeyDown = (e: React.KeyboardEvent) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault()
-            handleSendMessage()
+    const handleAddMessage = (msg: ChatMessage) => {
+        const fullMessage: Message = {
+            id: msg.id,
+            sessionId: msg.sessionId,
+            role: msg.role,
+            content: msg.content,
+            createdAt: msg.createdAt instanceof Date ? msg.createdAt : new Date(msg.createdAt || Date.now()),
+        }
+        dispatch({ type: 'ADD_MESSAGE', payload: fullMessage })
+    }
+
+    /**
+     * 更新消息
+     */
+    const handleUpdateMessage = (id: string, content: string) => {
+        dispatch({ type: 'UPDATE_MESSAGE', payload: { id, content } })
+    }
+
+    /**
+     * 设置加载状态
+     */
+    const handleSetLoading = (loading: boolean) => {
+        dispatch({ type: 'SET_LOADING', payload: loading })
+    }
+
+    /**
+     * 处理流式事件
+     */
+    const handleStreamEvent = (event: StreamEvent) => {
+        if (event.fileChanged) {
+            refreshFileTree()
         }
     }
 
     /**
-     * 渲染消息内容
+     * 空状态内容
      */
-    const renderMessageContent = (msg: Message) => {
-        return (
-            <div className={styles.messageContent}>
-                <pre style={{ whiteSpace: 'pre-wrap', margin: 0, fontFamily: 'inherit' }}>
-                    {msg.content}
-                </pre>
-                {msg.toolCalls && msg.toolCalls.length > 0 && (
-                    <div className={styles.toolCalls}>
-                        {msg.toolCalls.map(tool => (
-                            <div key={tool.id} className={styles.toolCall}>
-                                <Text type="secondary">工具调用: {tool.name}</Text>
-                                {tool.output && (
-                                    <pre className={styles.toolOutput}>{tool.output}</pre>
-                                )}
-                            </div>
-                        ))}
-                    </div>
-                )}
-            </div>
-        )
-    }
+    const emptyContent = !currentSessionId ? (
+        <Empty description="请选择或创建一个会话开始对话" />
+    ) : (
+        <Empty description="开始新对话吧" />
+    )
 
     /**
-     * 构造包含验证信息的 Git 仓库 URL
+     * 转换消息格式（包含 toolCalls）
      */
-    const constructAuthUrl = (currentWorkspace: Workspace): string => {
-        if (!currentWorkspace.username || !currentWorkspace.gitToken || !currentWorkspace.gitRepo) {
-            return ''
-        }
-
-        // 从 gitRepo 中提取协议和域名
-        const repoUrl = currentWorkspace.gitRepo
-        const protocolMatch = repoUrl.match(/^(https?):\/\//)
-        const protocol = protocolMatch ? protocolMatch[1] : 'http'
-
-        // 移除协议部分，只保留域名和路径
-        const urlWithoutProtocol = repoUrl.replace(/^https?:\/\//, '')
-
-        return `${protocol}://${currentWorkspace.username}:${currentWorkspace.gitToken}@${urlWithoutProtocol}`
-    }
+    const chatMessages: ChatMessage[] = messages.map((m: Message) => ({
+        id: m.id,
+        sessionId: m.sessionId,
+        role: m.role,
+        content: m.content,
+        toolCalls: m.toolCalls?.map(t => ({
+            id: t.id,
+            name: t.name,
+            input: t.input,
+            output: t.output,
+            status: t.status,
+        })),
+        createdAt: m.createdAt,
+    }))
 
     return (
         <div className={styles.container}>
@@ -433,128 +239,25 @@ export default function ChatPanel() {
                 />
             </div>
 
-
-            {/* 消息列表区域 */}
-            <div className={styles.messagesContainer}>
-                {!currentSessionId ? (
-                    <div className={styles.emptyChat}>
-                        <Empty description="请选择或创建一个会话开始对话" />
-                    </div>
-                ) : messages.length === 0 ? (
-                    <div className={styles.emptyChat}>
-                        <Empty description="开始新对话吧" />
-                    </div>
-                ) : (
-                    <div className={styles.messagesList}>
-                        {messages.map((msg) => (
-                            <div
-                                key={msg.id}
-                                className={`${styles.messageItem} ${msg.role === 'user' ? styles.userMessage : styles.assistantMessage}`}
-                            >
-                                <Avatar
-                                    size="small"
-                                    icon={msg.role === 'user' ? <UserOutlined /> : <RobotOutlined />}
-                                    style={{
-                                        backgroundColor: msg.role === 'user' ? '#1890ff' : '#52c41a',
-                                        flexShrink: 0,
-                                    }}
-                                />
-                                <div className={styles.messageBubble}>
-                                    {renderMessageContent(msg)}
-                                </div>
-                            </div>
-                        ))}
-                        {isLoading && (
-                            <div className={styles.loadingIndicator}>
-                                <div className={styles.thinkingDots}>
-                                    <span></span>
-                                    <span></span>
-                                    <span></span>
-                                </div>
-                                <Text type="secondary" style={{ marginLeft: 8 }}>正在思考...</Text>
-                            </div>
-                        )}
-                        <div ref={messagesEndRef} />
-                    </div>
-                )}
-            </div>
-
-            {/* 输入区域 */}
-            <div className={styles.composerContainer}>
-                {/* 快捷工具栏 */}
-                <div className={styles.quickToolbar}>
-                    <Button
-                        type="text"
-                        disabled={isLoading}
-                        onClick={async () => {
-                            if (!currentWorkspace) {
-                                message.warning('请先选择一个工作区')
-                                return
-                            }
-
-                            const initMessage = `/init-workspace --path ${currentWorkspace.path} --git-repo ${constructAuthUrl(currentWorkspace)}`
-
-                            // 直接发送消息，不更新输入框
-                            await sendMessageWithContent(initMessage)
-                        }}
-                    >
-                        初始化空间
-                    </Button>
-                </div>
-                <div className={styles.composer}>
-                    <TextArea
-                        value={inputValue}
-                        onChange={(e) => setInputValue(e.target.value)}
-                        onKeyDown={handleKeyDown}
-                        placeholder={currentSessionId ? '有什么我可以帮助你的吗？' : '请先选择一个会话'}
-                        autoSize={{ minRows: 3, maxRows: 10 }}
-                        disabled={!currentSessionId || isLoading}
-                        className={styles.composerTextarea}
-                    />
-                    <div className={styles.composerFooter}>
-                        <div className={styles.composerLeft}>
-                            <Button
-                                type="text"
-                                icon={<PlusOutlined />}
-                                className={styles.composerIconButton}
-                                disabled={isLoading}
-                                title="添加（敬请期待）"
-                            />
-                            <Button
-                                type="text"
-                                icon={<ClockCircleOutlined />}
-                                className={styles.composerIconButton}
-                                disabled={isLoading}
-                                title="历史（敬请期待）"
-                            />
-                        </div>
-                        <div className={styles.composerRight}>
-                            <Select
-                                value={selectedModel}
-                                onChange={setSelectedModel}
-                                options={[
-                                    { value: 'claude-haiku-4-5-20251001', label: 'Haiku 4.5' },
-                                    { value: 'claude-sonnet-4-5-20250929', label: 'Sonnet 4.5' },
-                                    { value: 'claude-opus-4-5-20251101', label: 'Opus 4.5' },
-                                ]}
-                                className={styles.modelSelect}
-                                variant="borderless"
-                                suffixIcon={<DownOutlined />}
-                                disabled={isLoading}
-                                popupMatchSelectWidth={false}
-                            />
-                            <Button
-                                type="text"
-                                icon={isLoading ? <LoadingOutlined spin /> : <ArrowUpOutlined />}
-                                onClick={handleSendMessage}
-                                disabled={!currentSessionId || isLoading || !inputValue.trim()}
-                                className={styles.sendButton}
-                                aria-label="发送"
-                            />
-                        </div>
-                    </div>
-                </div>
-            </div>
+            {/* 聊天消息和输入区域 */}
+            <ChatComposer
+                messages={chatMessages}
+                isLoading={isLoading}
+                sessionId={currentSessionId}
+                onAddMessage={handleAddMessage}
+                onUpdateMessage={handleUpdateMessage}
+                onSetLoading={handleSetLoading}
+                onStreamEvent={handleStreamEvent}
+                onSendError={() => message.error('发送消息失败')}
+                disabled={!currentSessionId}
+                placeholder={currentSessionId ? '有什么我可以帮助你的吗？' : '请先选择一个会话'}
+                emptyContent={emptyContent}
+                workspace={currentWorkspace}
+                showInitButton={true}
+                variant="compact"
+                className={styles.chatComposer}
+                enableMarkdown={true}
+            />
 
             {/* 新建会话对话框 */}
             <Modal

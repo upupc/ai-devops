@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { getSession } from "@/lib/session-store";
 import { getOrCreateChatSession } from "@/lib/chat-session";
 import { createLogger } from "@/lib/logger";
+import {SubscriberMessage} from "@/lib/types/agent";
 
 const logger = createLogger("ChatAPI");
 
@@ -13,6 +14,14 @@ const logger = createLogger("ChatAPI");
 export async function POST(request: NextRequest) {
     const encoder = new TextEncoder();
 
+    const createErrorString = (error: string) => {
+        return `data: ${JSON.stringify({ 
+            id:crypto.randomUUID(),
+            type: "error",
+            error:error
+        })}\n\n`;
+    };
+
     // 创建可读流
     const stream = new ReadableStream({
         async start(controller) {
@@ -21,14 +30,14 @@ export async function POST(request: NextRequest) {
                 const { sessionId, message, model } = body;
 
                 if (!sessionId || !message) {
-                    controller.enqueue(encoder.encode('data: {"error": "缺少必要参数"}\n\n'));
+                    controller.enqueue(encoder.encode(createErrorString("缺少必要参数")));
                     controller.close();
                     return;
                 }
 
                 const session = getSession(sessionId);
                 if (!session) {
-                    controller.enqueue(encoder.encode('data: {"error": "会话不存在"}\n\n'));
+                    controller.enqueue(encoder.encode(createErrorString("会话不存在")));
                     controller.close();
                     return;
                 }
@@ -36,42 +45,18 @@ export async function POST(request: NextRequest) {
                 // 获取或创建 ChatSession
                 const chatSession = getOrCreateChatSession(sessionId);
                 if (!chatSession) {
-                    controller.enqueue(encoder.encode('data: {"error": "无法创建会话"}\n\n'));
+                    controller.enqueue(encoder.encode(createErrorString("无法创建会话")));
                     controller.close();
                     return;
                 }
 
                 // 创建临时订阅者来接收消息
                 const subscriber = {
-                    send: (msg: string) => {
+                    send: (msg: SubscriberMessage) => {
                         try {
-                            const parsed = JSON.parse(msg);
-
-                            // 转换消息格式以保持 API 兼容性
-                            if (parsed.type === "assistant_message") {
-                                controller.enqueue(
-                                    encoder.encode(`data: ${JSON.stringify({ content: parsed.content })}\n\n`)
-                                );
-                            } else if (parsed.type === "tool_use") {
-                                controller.enqueue(
-                                    encoder.encode(`data: ${JSON.stringify({
-                                        toolCall: {
-                                            name: parsed.toolName,
-                                            input: parsed.toolInput
-                                        }
-                                    })}\n\n`)
-                                );
-                            } else if (parsed.type === "result") {
-                                // 结果消息，发送完成信号
-                                controller.enqueue(encoder.encode("data: [DONE]\n\n"));
-                                controller.close();
-                                // 取消订阅
-                                chatSession.unsubscribe(subscriber);
-                            } else if (parsed.type === "error") {
-                                controller.enqueue(
-                                    encoder.encode(`data: ${JSON.stringify({ error: parsed.error })}\n\n`)
-                                );
-                                controller.enqueue(encoder.encode("data: 系统处理失败，本次对话结束！\n\n"));
+                            const parsed = msg;
+                            controller.enqueue(encoder.encode(`data: ${JSON.stringify(parsed)}\n\n`));
+                            if(parsed.type=='result' || parsed.type=='error'){
                                 controller.enqueue(encoder.encode("data: [DONE]\n\n"));
                                 controller.close();
                             }
@@ -92,7 +77,7 @@ export async function POST(request: NextRequest) {
             } catch (error) {
                 logger.error("Chat API 错误", { error });
                 controller.enqueue(
-                    encoder.encode(`data: ${JSON.stringify({ error: "处理消息失败" })}\n\n`)
+                    encoder.encode(createErrorString("处理消息失败"))
                 );
                 controller.close();
             }

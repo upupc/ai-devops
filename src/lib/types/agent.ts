@@ -21,20 +21,10 @@ export interface AgentSessionOptions {
 }
 
 /**
- * 用户消息格式（SDK 要求的格式）
- */
-export interface UserMessage {
-    type: "user";
-    message: {
-        role: "user";
-        content: string;
-    };
-}
-
-/**
  * 广播消息 - 用户消息
  */
 export interface UserMessageBroadcast {
+    id:string;
     type: "user_message";
     content: string;
     sessionId: string;
@@ -44,6 +34,7 @@ export interface UserMessageBroadcast {
  * 广播消息 - 助手消息
  */
 export interface AssistantMessageBroadcast {
+    id:string;
     type: "assistant_message";
     content: string;
     sessionId: string;
@@ -53,6 +44,7 @@ export interface AssistantMessageBroadcast {
  * 广播消息 - 工具调用
  */
 export interface ToolUseBroadcast {
+    id:string;
     type: "tool_use";
     toolName: string;
     toolId: string;
@@ -64,17 +56,20 @@ export interface ToolUseBroadcast {
  * 广播消息 - 结果
  */
 export interface ResultBroadcast {
+    id:string;
     type: "result";
     success: boolean;
     sessionId: string;
     cost?: number;
     duration?: number;
+    tokens?: number;
 }
 
 /**
  * 广播消息 - 错误
  */
 export interface ErrorBroadcast {
+    id:string;
     type: "error";
     error: string;
     sessionId: string;
@@ -90,11 +85,22 @@ export type BroadcastMessage =
     | ResultBroadcast
     | ErrorBroadcast;
 
+export type SubscriberMessage = {
+    id: string;
+    type:string;
+    content?:string;
+    toolName?:string;
+    toolInput?:string;
+    cost?:number;
+    duration?:number;
+    error?:string;
+    tokens?: number;
+}
 /**
  * 订阅者接口
  */
 export interface Subscriber {
-    send(message: string): void;
+    send(message: SubscriberMessage): void;
     readyState: number;
     OPEN: number;
 }

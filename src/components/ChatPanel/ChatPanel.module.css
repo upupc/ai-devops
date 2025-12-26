@@ -3,6 +3,7 @@
     flex-direction: column;
     height: 100%;
     padding: 12px;
+    padding-bottom: 0;
 }
 
 .sessionHeader {
@@ -10,76 +11,12 @@
     justify-content: space-between;
     align-items: center;
     margin-bottom: 8px;
+    flex-shrink: 0;
 }
 
-.sessionList {
-    max-height: 200px;
-    overflow-y: auto;
-}
-
-.sessionItem {
-    cursor: pointer;
-    padding: 8px 12px !important;
-    border-radius: 4px;
-    transition: background-color 0.2s;
-}
-
-.sessionItem:hover {
-    background-color: #f5f5f5;
-}
-
-.sessionItem.active {
-    background-color: #e6f7ff;
-}
-
-.messagesContainer {
+.chatComposer {
     flex: 1;
-    overflow-y: auto;
-    margin-bottom: 12px;
-}
-
-.emptyChat {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-}
-
-.messagesList {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.messageItem {
-    display: flex;
-    gap: 8px;
-    max-width: 100%;
-}
-
-.userMessage {
-    flex-direction: row-reverse;
-}
-
-.assistantMessage {
-    flex-direction: row;
-}
-
-.messageBubble {
-    max-width: 85%;
-    padding: 8px 12px;
-    border-radius: 8px;
-    word-break: break-word;
-}
-
-.userMessage .messageBubble {
-    background-color: #1890ff;
-    color: #fff;
-}
-
-.assistantMessage .messageBubble {
-    background-color: #f0f0f0;
-    color: #333;
+    overflow: hidden;
 }
 
 .messageContent {

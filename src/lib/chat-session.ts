@@ -6,10 +6,10 @@
 import { AgentSession } from "./agent-client";
 import * as store from "./session-store";
 import type { SDKMessage } from "@anthropic-ai/claude-agent-sdk";
-import type { BroadcastMessage, Subscriber } from "./types/agent";
+import {BroadcastMessage, Subscriber, SubscriberMessage} from "./types/agent";
 import type {BetaMessage as APIAssistantMessage} from "@anthropic-ai/sdk/resources/beta/messages/messages";
 import * as crypto from "crypto";
-import {SDKAssistantMessageError} from "@anthropic-ai/claude-agent-sdk/entrypoints/agentSdkTypes";
+import {NonNullableUsage, SDKAssistantMessageError} from "@anthropic-ai/claude-agent-sdk/entrypoints/agentSdkTypes";
 import { createLogger } from "./logger";
 
 const logger = createLogger("ChatSession");
@@ -61,11 +61,12 @@ export class ChatSession {
         });
 
         // 2. 广播用户消息
-        this.broadcast({
-            type: "user_message",
-            content,
-            sessionId: this.sessionId
-        });
+        // this.broadcast({
+        //     id: crypto.randomUUID(),
+        //     type: "user_message",
+        //     content,
+        //     sessionId: this.sessionId
+        // });
 
         // 3. 确保 AgentSession 已创建
         if (!this.agentSession) {
@@ -80,7 +81,7 @@ export class ChatSession {
         try{
             this.agentSession.sendMessage(nextModelId, content);
         }catch (error){
-            logger.error("发送消息失败: sessionId={}, error={}", { sessionId: this.sessionId, error });
+            logger.error("发送消息失败: ", { sessionId: this.sessionId, error });
             this.broadcastError((error as Error).message);
         }
 
@@ -105,7 +106,7 @@ export class ChatSession {
                 this.handleSDKMessage(message);
             }
         } catch (error) {
-            logger.error("监听 Agent 输出失败: sessionId={}", { sessionId: this.sessionId, error });
+            logger.error("监听 Agent 输出失败: ", { sessionId: this.sessionId, error });
             this.broadcastError((error as Error).message);
         } finally {
             this.isListening = false;
@@ -133,21 +134,21 @@ export class ChatSession {
             case "assistant":
                 this.handleAssistantMessage(message);
                 if(logger.isDebugEnabled()){
-                    logger.debug("助手消息: sessionId={}, content={}", { sessionId: this.sessionId, content: JSON.stringify(message.message.content) });
+                    logger.debug("助手消息: ", { sessionId: message.session_id, content: JSON.stringify(message.message.content) });
                 }
                 break;
             case "result":
                 this.handleResultMessage(message);
                 if(logger.isDebugEnabled()){
                     if(message.subtype === "success"){
-                        logger.debug("对话完成: sessionId={}, result={}", { sessionId: this.sessionId, result: message.result });
+                        logger.debug("对话完成: ", { sessionId: message.session_id, result: message.result });
                     }else{
-                        logger.debug("对话异常: sessionId={}, subtype={}, errors={}", { sessionId: this.sessionId, subtype: message.subtype, errors: JSON.stringify(message.errors) });
+                        logger.debug("对话异常: ", { sessionId: message.session_id, subtype: message.subtype, errors: JSON.stringify(message.errors) });
                     }
                 }
                 break;
             case "system":
-                logger.info("系统消息: sessionId={}, subtype={}", { sessionId: this.sessionId, subtype: message.subtype });
+                logger.info("系统消息:", { sessionId: message.session_id, subtype: message.subtype });
                 break;
         }
 
@@ -164,11 +165,12 @@ export class ChatSession {
             store.addMessage(this.sessionId, {
                 sessionId: this.sessionId,
                 role: "assistant",
-                content
+                content:content
             });
             this.broadcast({
+                id: message.uuid,
                 type: "assistant_message",
-                content,
+                content:content,
                 sessionId: this.sessionId
             });
         } else if (Array.isArray(content)) {
@@ -182,6 +184,7 @@ export class ChatSession {
                         content: block.text
                     });
                     this.broadcast({
+                        id: message.uuid,
                         type: "assistant_message",
                         content: block.text,
                         sessionId: this.sessionId
@@ -189,6 +192,7 @@ export class ChatSession {
                 } else if (block.type === "tool_use") {
                     // 工具调用块
                     this.broadcast({
+                        id: message.uuid,
                         type: "tool_use",
                         toolName: block.name,
                         toolId: block.id,
@@ -200,6 +204,18 @@ export class ChatSession {
         }
     }
 
+    private calculateTotalTokens(usage: NonNullableUsage): number {
+        // 基础 token 消耗
+        const inputTokens = usage.input_tokens || 0;
+        const outputTokens = usage.output_tokens || 0;
+
+        // 缓存相关 token（这些通常已包含在 input_tokens 中，不需要重复计算）
+        // cache_creation_input_tokens - 用于创建缓存的输入 token
+        // cache_read_input_tokens - 从缓存读取的输入 token
+
+        // 总消耗 = 输入 + 输出
+        return inputTokens + outputTokens;
+    }
     /**
      * 处理结果消息
      */
@@ -208,14 +224,17 @@ export class ChatSession {
 
         if(isSuccess){
             this.broadcast({
+                id: message.uuid,
                 type: "result",
                 success: isSuccess,
                 sessionId: this.sessionId,
                 cost: message.total_cost_usd,
                 duration: message.duration_ms,
+                tokens:this.calculateTotalTokens(message.usage)
             });
         }else{
             this.broadcast({
+                id: message.uuid,
                 type: "error",
                 error: JSON.stringify(message.errors),
                 sessionId: this.sessionId,
@@ -224,7 +243,7 @@ export class ChatSession {
 
         // 如果是错误，记录错误信息
         if (!isSuccess && "errors" in message && message.errors) {
-            logger.error("对话结果错误: sessionId={}, errors={}", { sessionId: this.sessionId, errors: message.errors });
+            logger.error("对话结果错误: ", { sessionId: this.sessionId, errors: message.errors });
         }
     }
 
@@ -253,11 +272,10 @@ export class ChatSession {
      * 广播消息给所有订阅者
      */
     private broadcast(message: BroadcastMessage): void {
-        const messageStr = JSON.stringify(message);
         this.subscribers.forEach((subscriber) => {
             try {
                 if (subscriber.readyState === subscriber.OPEN) {
-                    subscriber.send(messageStr);
+                    subscriber.send(this.createSubscriberMessage(message));
                 }
             } catch (error) {
                 logger.error("广播消息失败", { error });
@@ -266,11 +284,46 @@ export class ChatSession {
         });
     }
 
+    private createSubscriberMessage(message:BroadcastMessage):SubscriberMessage{
+        switch(message.type){
+            case "user_message":
+            case "assistant_message":return {
+                    id:message.id,
+                    type: message.type,
+                    content: message.content,
+                };
+            case "tool_use":return {
+                id:message.id,
+                type: message.type,
+                toolName: message.toolName,
+                toolInput: JSON.stringify(message.toolInput)
+            };
+            case "result":return {
+                id:message.id,
+                type: message.type,
+                cost: message.cost,
+                duration: message.duration,
+                tokens: message.tokens
+            };
+            case "error":return {
+                id:message.id,
+                type: message.type,
+                error: message.error
+            };
+            default:return {
+                id:'',
+                type: 'error',
+                error: '未知消息类型'
+            };
+        }
+    }
+
     /**
      * 广播错误消息
      */
     private broadcastError(error: string): void {
         this.broadcast({
+            id: crypto.randomUUID(),
             type: "error",
             error,
             sessionId: this.sessionId
