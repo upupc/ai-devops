@@ -144,6 +144,7 @@ export default function ChatPanel() {
             sessionId: msg.sessionId,
             role: msg.role,
             content: msg.content,
+            toolCalls:msg.toolCalls,
             createdAt: msg.createdAt instanceof Date ? msg.createdAt : new Date(msg.createdAt || Date.now()),
         }
         dispatch({ type: 'ADD_MESSAGE', payload: fullMessage })

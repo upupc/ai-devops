@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useRef, useEffect, useState, ReactNode } from 'react'
-import { Input, Button, Select, Empty, Typography, message } from 'antd'
+import { Input, Button, Select, Empty, message } from 'antd'
 import {
     PlusOutlined,
     ClockCircleOutlined,
@@ -15,9 +15,9 @@ import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import { apiFetch } from '@/lib/api'
 import styles from './ChatComposer.module.css'
 import {SubscriberMessage} from "@/lib/types/agent";
+import { ToolCall } from '@/types'
 
 const { TextArea } = Input
-const { Text } = Typography
 
 /**
  * 工作区信息类型（用于初始化按钮等功能）
@@ -41,17 +41,6 @@ export interface ChatMessage {
     content: string
     toolCalls?: ToolCall[]
     createdAt?: Date | string
-}
-
-/**
- * 工具调用类型
- */
-export interface ToolCall {
-    id: string
-    name: string
-    input: Record<string, unknown>
-    output?: string
-    status?: 'pending' | 'running' | 'completed' | 'failed'
 }
 
 /**
@@ -348,9 +337,25 @@ export default function ChatComposer({
                                     lastMessageId = parsed.id;
                                     break;
                                 case "tool_use":
-                                    const toolCallInput = JSON.stringify(parsed.toolInput)
-                                    const toolMsg = `调用工具:${parsed.toolName}(${toolCallInput})`
-                                    onUpdateMessage(lastMessageId, toolMsg)
+                                    // const toolCallInput = JSON.stringify(parsed.toolInput)
+                                    // const toolMsg = `调用工具:${parsed.toolName}(${toolCallInput})`
+                                    // onUpdateMessage(lastMessageId, toolMsg)
+                                    onAddMessage({
+                                        id: parsed.id,
+                                        sessionId: activeSessionId,
+                                        role: 'assistant',
+                                        content:'',
+                                        toolCalls:[
+                                            {
+                                                id: parsed.id,
+                                                name: parsed.toolName||'',
+                                                input: JSON.parse(parsed.toolInput||'{}'),
+                                                status: 'running'
+                                            }
+                                        ],
+                                        createdAt: new Date(),
+                                    });
+                                    lastMessageId = parsed.id;
                                     break;
                                 case "result":
                                     onAddMessage({
@@ -450,17 +455,18 @@ export default function ChatComposer({
             </pre>
         )
 
-        // 渲染工具调用信息
+        // 渲染工具调用信息（markdown 代码块格式）
         const toolCallsElement = msg.toolCalls && msg.toolCalls.length > 0 ? (
             <div className={styles.toolCalls}>
-                {msg.toolCalls.map(tool => (
-                    <div key={tool.id} className={styles.toolCall}>
-                        <Text type="secondary">工具调用: {tool.name}</Text>
-                        {tool.output && (
-                            <pre className={styles.toolOutput}>{tool.output}</pre>
-                        )}
-                    </div>
-                ))}
+                {msg.toolCalls.map(tool => {
+                    const inputStr = tool.input ? JSON.stringify(tool.input, null, 2) : '';
+                    const markdownContent = `调用工具:\n\`\`\`shell\n${tool.name}(${inputStr})\n\`\`\``;
+                    return (
+                        <div key={tool.id} className={styles.toolCall}>
+                            <MarkdownContent content={markdownContent} />
+                        </div>
+                    );
+                })}
             </div>
         ) : null
 
