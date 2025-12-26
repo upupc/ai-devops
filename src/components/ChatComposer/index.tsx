@@ -228,7 +228,7 @@ export default function ChatComposer({
     /**
      * 处理初始化工作区按钮点击
      */
-    const handleInitWorkspace = () => {
+    const handleInitWorkspace = async () => {
         if (!workspace) {
             message.warning('请先选择一个工作区')
             return
@@ -244,8 +244,7 @@ export default function ChatComposer({
             message.warning('正在发送消息，请稍后...')
             return;
         }
-        setInputValue(initMessage);
-        handleSendMessage();
+        await doSendMessage(initMessage);
     }
 
     /**
@@ -259,16 +258,7 @@ export default function ChatComposer({
         scrollToBottom()
     }, [messages])
 
-    /**
-     * 发送消息
-     */
-    const handleSendMessage = async () => {
-        if (!inputValue.trim() || disabled || isLoading) return
-
-        const content = inputValue.trim()
-        setInputValue('')
-
-        // 确定会话 ID
+    const doSendMessage = async (content: string) =>{
         let activeSessionId = sessionId
         if (!activeSessionId) {
             if (onCreateSession) {
@@ -303,7 +293,7 @@ export default function ChatComposer({
         try {
             const response = await apiFetch('/api/chat', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({
                     sessionId: activeSessionId,
                     message: content,
@@ -321,10 +311,10 @@ export default function ChatComposer({
             let lastMessageId = '';
 
             while (true) {
-                const { done, value } = await reader.read()
+                const {done, value} = await reader.read()
                 if (done) break
 
-                buffer += decoder.decode(value, { stream: true })
+                buffer += decoder.decode(value, {stream: true})
                 const lines = buffer.split('\n')
                 buffer = lines.pop() || ''
 
@@ -336,7 +326,7 @@ export default function ChatComposer({
                         try {
                             const parsed = JSON.parse(data) as SubscriberMessage
 
-                            switch(parsed.type){
+                            switch (parsed.type) {
                                 case "user_message":
                                     onAddMessage({
                                         id: parsed.id,
@@ -406,7 +396,6 @@ export default function ChatComposer({
             }
 
 
-
             onSendSuccess?.()
         } catch (error) {
             onSendError?.(error as Error)
@@ -414,6 +403,19 @@ export default function ChatComposer({
             onSetLoading(false);
             console.log('onSetLoading false')
         }
+    }
+
+    /**
+     * 发送消息
+     */
+    const handleSendMessage = async () => {
+        if (!inputValue.trim() || disabled || isLoading) return
+
+        const content = inputValue.trim()
+        setInputValue('')
+
+        // 确定会话 ID
+        await doSendMessage(content);
     }
 
     /**

@@ -172,7 +172,8 @@ export class AgentSession {
         // 读取工作空间目录下的 SYSTEM.md 作为系统提示词
         let systemPrompt: { type: "preset"; preset: "claude_code"; append?: string|undefined } | string = {
             type: 'preset',
-            preset: 'claude_code'
+            preset: 'claude_code',
+            append: 'You must answer the questions in Chinese.'
         };
 
         if (options?.cwd) {
