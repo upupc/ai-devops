@@ -227,7 +227,7 @@ export default function ChatComposer({
             return
         }
 
-        const initMessage = `/init-workspace --path ${workspace.path} --git-repo ${constructAuthUrl(workspace)}`
+        const initMessage = "/init-workspace";
 
         if (disabled || isLoading) {
             message.warning('正在发送消息，请稍后...')
