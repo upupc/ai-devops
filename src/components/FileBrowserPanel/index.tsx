@@ -525,6 +525,7 @@ export default function FileBrowserPanel() {
                 }}
                 okText="创建"
                 cancelText="取消"
+                maskClosable={false}
             >
                 <Input
                     placeholder={`请输入${createType === 'file' ? '文件' : '文件夹'}名称`}

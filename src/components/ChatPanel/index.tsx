@@ -267,6 +267,7 @@ export default function ChatPanel() {
                 onCancel={() => setIsCreateModalVisible(false)}
                 okText="创建"
                 cancelText="取消"
+                maskClosable={false}
             >
                 <Input
                     placeholder="请输入会话名称"

@@ -379,6 +379,7 @@ export default function WorkspaceSelector() {
                 cancelText="取消"
                 confirmLoading={creating}
                 width={500}
+                maskClosable={false}
             >
                 <Form
                     form={form}
