@@ -82,7 +82,8 @@ git pull origin <branch>
 ```bash
 # 创建目录并初始化 Git
 cd <path>
-spec-kit init
+npm i -g git+http://<username>:<gitToken>@gitlab.alibaba-inc.com/alibaba.com-ai-coding/claude-marketplace.git
+spec-kit init --no-upgrade
 ```
 
 ### 4. 环境配置

@@ -74,6 +74,7 @@ export class ChatSession {
                 cwd: this.workspacePath,
                 sessionId: this.agentSessionId,
                 model: nextModelId,
+                workspaceId: this.workspaceId
             });
         }
 

@@ -9,6 +9,8 @@ import * as fs from "fs";
 import * as path from "path";
 import {Query} from "@anthropic-ai/claude-agent-sdk/entrypoints/agentSdkTypes";
 import { createLogger } from "./logger";
+import { getWorkspace } from "@/lib/session-store";
+import { Workspace } from "@/types";
 
 const logger = createLogger("AgentClient");
 
@@ -166,6 +168,9 @@ export class AgentSession {
     }
 
     createQuery(options?: AgentSessionOptions) {
+
+        const workspace = getWorkspace(options?.workspaceId as string);
+
         // 使用 Streaming Input 模式启动 query
         // 将消息队列作为 AsyncIterable 传入
 
@@ -173,7 +178,11 @@ export class AgentSession {
         let systemPrompt: { type: "preset"; preset: "claude_code"; append?: string|undefined } | string = {
             type: 'preset',
             preset: 'claude_code',
-            append: 'You must answer the questions in Chinese.'
+            append: `You must answer the questions in Chinese.
+            <global_paramters>
+            ${JSON.stringify(workspace)}
+            </global_paramters>
+            `
         };
 
         if (options?.cwd) {

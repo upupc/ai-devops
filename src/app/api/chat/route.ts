@@ -4,6 +4,11 @@ import { getOrCreateChatSession } from "@/lib/chat-session";
 import { createLogger } from "@/lib/logger";
 import {SubscriberMessage} from "@/lib/types/agent";
 
+// 强制动态渲染，避免生产模式下 SSE 被缓冲
+export const dynamic = 'force-dynamic';
+// 确保使用 Node.js 运行时（支持完整的流式能力）
+export const runtime = 'nodejs';
+
 const logger = createLogger("ChatAPI");
 
 /**

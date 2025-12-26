@@ -18,6 +18,8 @@ export interface AgentSessionOptions {
     cwd?: string;
     /** 会话ID */
     sessionId?: string;
+    /** 工作区ID */
+    workspaceId?: string;
 }
 
 /**
