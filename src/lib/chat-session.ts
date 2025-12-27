@@ -178,30 +178,51 @@ export class ChatSession {
         } else if (Array.isArray(content)) {
             // 数组内容（包含多个 block）
             content.forEach((block) => {
-                if (block.type === "text") {
-                    // 文本块
-                    store.addMessage(this.sessionId, {
-                        sessionId: this.sessionId,
-                        role: "assistant",
-                        content: block.text
-                    });
-                    this.broadcast({
-                        id: message.uuid,
-                        type: "assistant_message",
-                        content: block.text,
-                        sessionId: this.sessionId
-                    });
-                } else if (block.type === "tool_use") {
-                    // 工具调用块
-                    this.broadcast({
-                        id: message.uuid,
-                        type: "tool_use",
-                        toolName: block.name,
-                        toolId: block.id,
-                        toolInput: block.input,
-                        sessionId: this.sessionId
-                    });
+                switch (block.type) {
+                    case "text":
+                        // 文本块
+                        store.addMessage(this.sessionId, {
+                            sessionId: this.sessionId,
+                            role: "assistant",
+                            content: block.text
+                        });
+                        this.broadcast({
+                            id: message.uuid,
+                            type: "assistant_message",
+                            content: block.text,
+                            sessionId: this.sessionId
+                        });
+                        break;
+                    case "thinking":
+                        // 文本块
+                        store.addMessage(this.sessionId, {
+                            sessionId: this.sessionId,
+                            role: "assistant",
+                            content: block.thinking
+                        });
+                        this.broadcast({
+                            id: message.uuid,
+                            type: "assistant_message",
+                            content: block.thinking,
+                            sessionId: this.sessionId
+                        });
+                        break;
+                    case "tool_use":
+                        // 工具调用块
+                        // 工具调用块
+                        this.broadcast({
+                            id: message.uuid,
+                            type: "tool_use",
+                            toolName: block.name,
+                            toolId: block.id,
+                            toolInput: block.input,
+                            sessionId: this.sessionId
+                        });
+                        break;
+                    default:
+                        break;
                 }
+
             });
         }
     }
