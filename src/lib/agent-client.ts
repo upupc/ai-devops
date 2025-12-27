@@ -217,10 +217,7 @@ export class AgentSession {
                 settingSources: ["project"],
                 resume: options?.sessionId as any,
                 stderr: data => logger.debug("claude-agent-sdk: {}", { data }),
-                abortController: this.abortController as any,
-                env:{
-                    CLAUDE_CONFIG_DIR: claudeConfigPath
-                }
+                abortController: this.abortController as any
             }
         });
     }
@@ -273,6 +270,7 @@ export class AgentSession {
                 yield value;
             } catch (error) {
                 logger.warn("Claude Query 因空闲超时被终止", { sessionId: this.sessionId, error });
+                await this.handleIdleTimeout();
                 return;
             }
         }

@@ -120,9 +120,6 @@ async function updateSettingsJson(
         if (llmBaseUrl) {
             settings.env.ANTHROPIC_BASE_URL = llmBaseUrl;
         }
-
-        settings.env.CLAUDE_CONFIG_DIR = claudeConfigPath;
-
         // 写回文件
         await fsPromises.writeFile(
             settingsPath,
