@@ -191,7 +191,7 @@ export class AgentSession {
                 if (fs.existsSync(systemMdPath)) {
                     const content = fs.readFileSync(systemMdPath, "utf-8").trim();
                     if (content) {
-                        systemPrompt.append = content;
+                        systemPrompt.append += content;
                     }
                 }
             } catch (error) {
@@ -219,7 +219,7 @@ export class AgentSession {
                 stderr: data => logger.debug("claude-agent-sdk: {}", { data }),
                 abortController: this.abortController as any,
                 env:{
-                    CLAUDE_CONFIG_DIR: claudeConfigPath
+                    // CLAUDE_CONFIG_DIR: claudeConfigPath
                 }
             }
         });
@@ -272,7 +272,7 @@ export class AgentSession {
 
                 yield value;
             } catch (error) {
-                logger.warn("Claude Query 因空闲超时被终止: sessionId={}", { sessionId: this.sessionId, error });
+                logger.warn("Claude Query 因空闲超时被终止", { sessionId: this.sessionId, error });
                 return;
             }
         }
