@@ -9,7 +9,8 @@ description: 初始化一个新的工作空间，包括目录创建、Git 仓库
 初始化一个新的工作空间，包括目录创建、Git 仓库克隆和基础配置设置。此命令用于快速创建标准化的工作环境。
 
 ## 约束条件
-禁止删除任何文件和目录
+- 禁止删除任何文件和目录
+- 禁止向GIT远程仓库推送文件
 
 ## 命令格式
 
@@ -35,10 +36,7 @@ description: 初始化一个新的工作空间，包括目录创建、Git 仓库
 ## 执行步骤
 
 ### 1. 输入参数验证
-
-验证所有必需参数是否提供，检查路径格式和仓库 URL 格式的有效性。
-- Git 仓库 URL 必须包含用户名和令牌数据
-- 如果Git仓库URL不符合要求，提示用户重新输入Git仓库URL
+无
 
 ### 2. 创建工作空间目录
 禁止删除任何文件和目录
@@ -50,6 +48,9 @@ cd <path>
 
 ### 3. Git 仓库初始化
 使用username、gitToken和gitRepo构造含有用户名和令牌信息的Git仓库URL
+- 如果是alibaba-inc.com，则需要同时包含用户名和令牌
+- 如果是github.com, 则只需要包含令牌
+
 ```bash
 # 创建目录并初始化 Git
 cd <path>
@@ -62,7 +63,7 @@ git pull origin master
 ```
 
 ### 4. 初始化spec-kit
-
+- 如果是alibaba-inc.com, 按如下脚本执行spec-kit初始化，否则不需要执行spec-kit初始化
 ```bash
 # 创建目录并初始化 Git
 cd <path>
