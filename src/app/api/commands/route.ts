@@ -53,7 +53,6 @@ export interface QuickCommand {
     name: string
     description: string
     type: 'command' | 'skill'
-    content: string
     triggerWords?: string[]
 }
 
@@ -84,8 +83,7 @@ function readCommandsFromDir(dirPath: string, type: 'command' | 'skill'): QuickC
                         id: `cmd_${file.replace('.md', '')}`,
                         name: `/${name}`,
                         description,
-                        type: 'command',
-                        content,
+                        type: 'command'
                     })
                 } catch {
                     logger.warn('读取命令文件失败', { file })
@@ -104,7 +102,7 @@ function readCommandsFromDir(dirPath: string, type: 'command' | 'skill'): QuickC
                 if (fs.existsSync(skillFilePath)) {
                     try {
                         const content = fs.readFileSync(skillFilePath, 'utf-8')
-                        const { metadata, body } = parseFrontMatter(content)
+                        const { metadata } = parseFrontMatter(content)
 
                         const name = (metadata.name as string) || dir
                         const description = (metadata.description as string) || ''
@@ -121,7 +119,6 @@ function readCommandsFromDir(dirPath: string, type: 'command' | 'skill'): QuickC
                             name: triggerWords.length > 0 ? triggerWords[0] : name,
                             description,
                             type: 'skill',
-                            content: body,
                             triggerWords,
                         })
                     } catch {
