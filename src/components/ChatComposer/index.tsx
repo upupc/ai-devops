@@ -16,6 +16,7 @@ import { apiFetch } from '@/lib/api'
 import styles from './ChatComposer.module.css'
 import {SubscriberMessage} from "@/lib/types/agent";
 import { ToolCall } from '@/types'
+import CommandPalette, { QuickCommand } from '@/components/CommandPalette'
 
 const { TextArea } = Input
 
@@ -196,7 +197,9 @@ export default function ChatComposer({
 }: ChatComposerProps) {
     const [inputValue, setInputValue] = useState('')
     const [selectedModel, setSelectedModel] = useState('claude-sonnet-4-5-20250929')
+    const [showCommandPalette, setShowCommandPalette] = useState(false)
     const messagesEndRef = useRef<HTMLDivElement>(null)
+    const textareaRef = useRef<HTMLTextAreaElement>(null)
 
     /**
      * 构造包含验证信息的 Git 仓库 URL
@@ -427,10 +430,50 @@ export default function ChatComposer({
      * 处理键盘事件
      */
     const handleKeyDown = (e: React.KeyboardEvent) => {
+        // 如果命令面板打开，使用方向键和Enter导航
+        if (showCommandPalette) {
+            if (e.key === 'ArrowUp' || e.key === 'ArrowDown' || e.key === 'Enter' || e.key === 'Escape') {
+                // 让CommandPalette处理这些按键
+                return
+            }
+        }
+
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault()
             handleSendMessage()
         }
+    }
+
+    /**
+     * 处理输入框内容变化 - 检测是否显示命令面板
+     */
+    const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+        const value = e.target.value
+        setInputValue(value)
+
+        // 检测是否以/开头且命令面板未显示
+        if (value === '/' && !showCommandPalette && workspace) {
+            setShowCommandPalette(true)
+        }
+    }
+
+    /**
+     * 选择快捷指令
+     */
+    const handleSelectCommand = (command: QuickCommand) => {
+        // 使用命令的完整内容
+        setInputValue(command.name.trim())
+        // 聚焦输入框
+        setTimeout(() => {
+            textareaRef.current?.focus()
+        }, 100)
+    }
+
+    /**
+     * 关闭命令面板
+     */
+    const handleCloseCommandPalette = () => {
+        setShowCommandPalette(false)
     }
 
     /**
@@ -545,8 +588,9 @@ export default function ChatComposer({
 
                 <div className={styles.composer}>
                     <TextArea
+                        ref={textareaRef}
                         value={inputValue}
-                        onChange={(e) => setInputValue(e.target.value)}
+                        onChange={handleInputChange}
                         onKeyDown={handleKeyDown}
                         placeholder={placeholder}
                         autoSize={{ minRows: variant === 'full' ? 3 : 2, maxRows: 10 }}
@@ -598,6 +642,16 @@ export default function ChatComposer({
                     <p className={styles.disclaimer}>{disclaimer}</p>
                 )}
             </div>
+
+            {/* 快捷指令面板 */}
+            {workspace && (
+                <CommandPalette
+                    visible={showCommandPalette}
+                    onClose={handleCloseCommandPalette}
+                    onSelect={handleSelectCommand}
+                    workspacePath={workspace.path}
+                />
+            )}
         </div>
     )
 }
