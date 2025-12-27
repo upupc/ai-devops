@@ -170,7 +170,7 @@ export class AgentSession {
     createQuery(options?: AgentSessionOptions) {
 
         const workspace = getWorkspace(options?.workspaceId as string);
-
+        const claudeConfigPath = path.join(workspace?.path as string, ".claude");
         // 使用 Streaming Input 模式启动 query
         // 将消息队列作为 AsyncIterable 传入
 
@@ -217,7 +217,10 @@ export class AgentSession {
                 settingSources: ["project"],
                 resume: options?.sessionId as any,
                 stderr: data => logger.debug("claude-agent-sdk: {}", { data }),
-                abortController: this.abortController as any
+                abortController: this.abortController as any,
+                env:{
+                    CLAUDE_CONFIG_DIR: claudeConfigPath
+                }
             }
         });
     }

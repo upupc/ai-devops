@@ -101,7 +101,8 @@ async function updateSettingsJson(
     llmApiToken?: string,
     llmBaseUrl?: string
 ): Promise<void> {
-    const settingsPath = path.join(workspacePath, ".claude", "settings.json");
+    const claudeConfigPath = path.join(workspacePath, ".claude");
+    const settingsPath = path.join(claudeConfigPath, "settings.json");
 
     try {
         const settingsContent = await fsPromises.readFile(settingsPath, "utf-8");
@@ -119,6 +120,8 @@ async function updateSettingsJson(
         if (llmBaseUrl) {
             settings.env.ANTHROPIC_BASE_URL = llmBaseUrl;
         }
+
+        settings.env.CLAUDE_CONFIG_DIR = claudeConfigPath;
 
         // 写回文件
         await fsPromises.writeFile(
