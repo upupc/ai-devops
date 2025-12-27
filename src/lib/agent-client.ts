@@ -219,7 +219,7 @@ export class AgentSession {
                 stderr: data => logger.debug("claude-agent-sdk: {}", { data }),
                 abortController: this.abortController as any,
                 env:{
-                    // CLAUDE_CONFIG_DIR: claudeConfigPath
+                    CLAUDE_CONFIG_DIR: claudeConfigPath
                 }
             }
         });
