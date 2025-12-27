@@ -44,7 +44,7 @@ export class ChatSession {
     /**
      * 发送用户消息
      */
-    sendMessage(model: string, content: string): void {
+    async sendMessage(model: string, content: string): Promise<void> {
         let nextModelId:string|undefined = model;
         if (model && model !== this.modelId) {
             this.modelId = model;
@@ -76,11 +76,12 @@ export class ChatSession {
                 model: nextModelId,
                 workspaceId: this.workspaceId
             });
+            await this.agentSession.init();
         }
 
         // 4. 发送到 Agent
         try{
-            this.agentSession.sendMessage(nextModelId, content);
+            await this.agentSession.sendMessage(nextModelId, content);
         }catch (error){
             logger.error("发送消息失败: ", { sessionId: this.sessionId, error });
             this.broadcastError((error as Error).message);

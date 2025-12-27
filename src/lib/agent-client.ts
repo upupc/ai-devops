@@ -10,10 +10,10 @@ import * as path from "path";
 import {Query} from "@anthropic-ai/claude-agent-sdk/entrypoints/agentSdkTypes";
 import { createLogger } from "./logger";
 import { getWorkspace } from "@/lib/session-store";
-import { Workspace } from "@/types";
+const { Mutex } = require('async-mutex');
 
 const logger = createLogger("AgentClient");
-
+const mutex = new Mutex();
 /**
  * 消息队列类
  * 实现异步迭代器接口，支持消息排队和顺序处理
@@ -110,12 +110,11 @@ export class AgentSession {
 
     constructor(options?: AgentSessionOptions) {
         this.options = options;
-        this.init(options);
     }
 
-    private init(options?: AgentSessionOptions) {
+    public async init() {
         this.abortController = new AbortController();
-        this.queryResult = this.createQuery(options);
+        this.queryResult = await this.createQuery(this.options);
         this.outputIterator = this.queryResult[Symbol.asyncIterator]();
         this.idleTimedOut = false;
         this.resetIdleTimer();
@@ -156,18 +155,28 @@ export class AgentSession {
     /**
      * 重新创建 query
      */
-    private recreateQuery(options?: AgentSessionOptions): void {
+    private async recreateQuery(options?: AgentSessionOptions): Promise<void> {
         // 清理旧的 AbortController
         if (this.timeoutId) {
             clearTimeout(this.timeoutId);
             this.timeoutId = null;
         }
+        this.options = {...this.options, ...options};
 
         // 创建新的 query
-        this.init(options);
+        await this.init();
     }
 
-    createQuery(options?: AgentSessionOptions) {
+    async createQuery(options?: AgentSessionOptions) {
+        const release = await mutex.acquire();
+        try{
+            return await this.doCreateQuery(options);
+        }finally {
+            release();
+        }
+    }
+
+    async doCreateQuery(options?: AgentSessionOptions) {
 
         const workspace = getWorkspace(options?.workspaceId as string);
         const claudeConfigPath = path.join(workspace?.path as string, ".claude");
@@ -227,7 +236,7 @@ export class AgentSession {
     /**
      * 发送消息到 Agent
      */
-    sendMessage(model:string|undefined,content: string): void {
+    async sendMessage(model:string|undefined,content: string): Promise<void> {
         if (this.queue.isClosed()) {
             throw new Error("Session is closed");
         }
@@ -235,7 +244,7 @@ export class AgentSession {
         // 检查当前 query 是否已取消
         if (this.idleTimedOut) {
             logger.info("检测到 query 已取消，重新创建 query");
-            this.recreateQuery({model:model,...this.options});
+            await this.recreateQuery({model:model,...this.options});
         } else if (model) {
             // 只有在 query 未取消时才尝试设置模型
             this.queryResult?.setModel(model);
