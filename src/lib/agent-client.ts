@@ -201,6 +201,8 @@ export class AgentSession {
         // 优先使用传入的model参数，否则使用默认值
         const model = options?.model || "claude-sonnet-4-5-20250929";
 
+        process.env.CLAUDE_CONFIG_DIR=claudeConfigPath;
+
         return query({
             prompt: this.queue as AsyncIterable<SDKUserMessage>,
             options: {
