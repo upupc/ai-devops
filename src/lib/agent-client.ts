@@ -216,7 +216,7 @@ export class AgentSession {
                 },
                 settingSources: ["project"],
                 resume: options?.sessionId as any,
-                stderr: data => logger.debug("claude-agent-sdk: {}", { data }),
+                stderr: data => logger.error("claude-agent-sdk", { data }),
                 abortController: this.abortController as any
             }
         });
