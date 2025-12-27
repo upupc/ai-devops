@@ -210,27 +210,30 @@ export class AgentSession {
         // 优先使用传入的model参数，否则使用默认值
         const model = options?.model || "claude-sonnet-4-5-20250929";
 
-        process.env.CLAUDE_CONFIG_DIR=claudeConfigPath;
-
-        return query({
-            prompt: this.queue as AsyncIterable<SDKUserMessage>,
-            options: {
-                maxTurns: options?.maxTurns ?? 100,
-                model: model,
-                systemPrompt: systemPrompt,
-                cwd: options?.cwd,
-                permissionMode: "bypassPermissions",
-                allowDangerouslySkipPermissions: true,
-                tools: {
-                    type: "preset",
-                    preset: "claude_code",
-                },
-                settingSources: ["project"],
-                resume: options?.sessionId as any,
-                stderr: data => logger.error("claude-agent-sdk", { data }),
-                abortController: this.abortController as any
-            }
-        });
+        try{
+            process.env.CLAUDE_CONFIG_DIR=claudeConfigPath;
+            return await query({
+                prompt: this.queue as AsyncIterable<SDKUserMessage>,
+                options: {
+                    maxTurns: options?.maxTurns ?? 100,
+                    model: model,
+                    systemPrompt: systemPrompt,
+                    cwd: options?.cwd,
+                    permissionMode: "bypassPermissions",
+                    allowDangerouslySkipPermissions: true,
+                    tools: {
+                        type: "preset",
+                        preset: "claude_code",
+                    },
+                    settingSources: ["project"],
+                    resume: options?.sessionId as any,
+                    stderr: data => logger.error("claude-agent-sdk", { data }),
+                    abortController: this.abortController as any
+                }
+            });
+        }finally {
+            delete process.env.CLAUDE_CONFIG_DIR;
+        }
     }
 
     /**
