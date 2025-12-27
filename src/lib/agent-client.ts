@@ -10,7 +10,7 @@ import * as path from "path";
 import {Query} from "@anthropic-ai/claude-agent-sdk/entrypoints/agentSdkTypes";
 import { createLogger } from "./logger";
 import { getWorkspace } from "@/lib/session-store";
-const { Mutex } = require('async-mutex');
+import {Mutex} from 'async-mutex';
 
 const logger = createLogger("AgentClient");
 const mutex = new Mutex();
